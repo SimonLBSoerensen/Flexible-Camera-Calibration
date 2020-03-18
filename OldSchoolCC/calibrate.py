@@ -3,7 +3,9 @@ import numpy as np
 from tqdm import tqdm
 from collections import Iterable
 
-def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, -1), criteria=None):
+
+def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, -1), criteria=None,
+                     calibrateCamera_flags=cv2.CALIB_RATIONAL_MODEL):
     """
     Will do a normal camera calibration. This will be done by finding the chessboards in the provided grayscale
     images. ret, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera(gray_imgs, pattern_size, win_size=(10,
@@ -20,6 +22,13 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
             the process of corner position refinement stops either after criteria.maxCount iterations or when
             the corner position moves by less than criteria.epsilon on some iteration.
             If None the criteria will be set to (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        calibrateCamera_flags (int): The flags used in cv2.calibrateCamera. Default value is cv2.CALIB_RATIONAL_MODEL. Flages tehre can be used:
+            CALIB_USE_INTRINSIC_GUESS cameraMatrix contains valid initial values of fx, fy, cx, cy that are optimized further. Otherwise, (cx, cy) is initially set to the image center ( imageSize is used), and focal distances are computed in a least-squares fashion. Note, that if intrinsic parameters are known, there is no need to use this function just to estimate extrinsic parameters. Use solvePnP() instead.
+            CALIB_FIX_PRINCIPAL_POINT The principal point is not changed during the global optimization. It stays at the center or at a different location specified when CV_CALIB_USE_INTRINSIC_GUESS is set too.
+            CALIB_FIX_ASPECT_RATIO The functions considers only fy as a free parameter. The ratio fx/fy stays the same as in the input cameraMatrix . When CV_CALIB_USE_INTRINSIC_GUESS is not set, the actual input values of fx and fy are ignored, only their ratio is computed and used further.
+            CALIB_ZERO_TANGENT_DIST Tangential distortion coefficients (p_1, p_2) are set to zeros and stay zero.
+            CALIB_FIX_K1,...,CV_CALIB_FIX_K6 The corresponding radial distortion coefficient is not changed during the optimization. If CV_CALIB_USE_INTRINSIC_GUESS is set, the coefficient from the supplied distCoeffs matrix is used. Otherwise, it is set to 0.
+            CALIB_RATIONAL_MODEL Coefficients k4, k5, and k6 are enabled. To provide the backward compatibility, this extra flag should be explicitly specified to make the calibration function use the rational model and return 8 coefficients. If the flag is not set, the function computes and returns only 5 distortion coefficients.
 
     Returns:
         ret (float): The RMS re-projection error in pixels
@@ -69,5 +78,5 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
     ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points,
                                                                         (gray_imgs[0].shape[1], gray_imgs[0].shape[0]),
                                                                         cameraMatrix=None, distCoeffs=None,
-                                                                        flags=cv2.CALIB_RATIONAL_MODEL)
+                                                                        flags=calibrateCamera_flags)
     return ret, camera_matrix, dist_coeffs, rvecs, tvecs
