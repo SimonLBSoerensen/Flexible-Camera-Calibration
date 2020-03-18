@@ -9,7 +9,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
     """
     Will do a normal camera calibration. This will be done by finding the chessboards in the provided grayscale
     images. ret, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera(gray_imgs, pattern_size, win_size=(10,
-    10), zero_zone=(-1, -1), criteria=None)
+    10), zero_zone=(-1, -1), criteria=None, calibrate_camera_flags=cv2.CALIB_RATIONAL_MODEL)
 
     Arguments:
         gray_imgs (iterable): Array there contains the images with chessboards. The images has to be in grayscale colorspace
