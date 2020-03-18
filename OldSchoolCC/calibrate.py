@@ -5,7 +5,7 @@ from collections import Iterable
 
 
 def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, -1), criteria=None,
-                     calibrateCamera_flags=cv2.CALIB_RATIONAL_MODEL):
+                     calibrate_camera_flags=cv2.CALIB_RATIONAL_MODEL):
     """
     Will do a normal camera calibration. This will be done by finding the chessboards in the provided grayscale
     images. ret, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera(gray_imgs, pattern_size, win_size=(10,
@@ -78,5 +78,5 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
     ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points,
                                                                         (gray_imgs[0].shape[1], gray_imgs[0].shape[0]),
                                                                         cameraMatrix=None, distCoeffs=None,
-                                                                        flags=calibrateCamera_flags)
+                                                                        flags=calibrate_camera_flags)
     return ret, camera_matrix, dist_coeffs, rvecs, tvecs
