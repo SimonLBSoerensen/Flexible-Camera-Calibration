@@ -36,8 +36,8 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
             [[fx, 0,  cx],
              [0,  fy, cy],
              [0,  0,  1]]
-        dist_coeffs (ndarray): Output vector of distortion coefficients
-            (8 coefficients, 6 zeros = 15 values (k1, k2, p1, p2, k3, k4, k5, k6, 0, 0, 0, 0, 0, 0))
+        dist_coeffs (ndarray): Output vector of distortion coefficients 4, 5, or 8 elements
+            (k1, k2, p1, p2, [k3, [k4, k5, k6]])
         rvecs (ndarray): Rotation vectors estimated for each pattern view
         tvecs (ndarray): Translation vectors estimated for each pattern view
     """
