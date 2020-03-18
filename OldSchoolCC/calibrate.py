@@ -36,6 +36,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
     assert len(pattern_size) == 2 and isinstance(pattern_size, tuple), "pattern_size has to be a tuple of length 2"
     assert len(win_size) == 2 and isinstance(win_size, tuple), "win_size has to be a tuple of length 2"
     assert len(zero_zone) == 2 and isinstance(zero_zone, tuple), "zero_zone has to be a tuple of length 2"
+    assert isinstance(criteria, tuple), "criteria has to be a tuple"
 
     if criteria is None:
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
