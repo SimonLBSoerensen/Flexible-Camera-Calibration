@@ -5,9 +5,9 @@ from collections import Iterable
 
 
 def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, -1), criteria=None,
-                     calibrate_camera_flags=(cv2.CALIB_RATIONAL_MODEL +
-                                             cv2.CALIB_THIN_PRISM_MODEL +
-                                             cv2.CALIB_TILTED_MODEL), verbose=0):
+                     flags=(cv2.CALIB_RATIONAL_MODEL +
+                            cv2.CALIB_THIN_PRISM_MODEL +
+                            cv2.CALIB_TILTED_MODEL), verbose=0):
     """
     Will do a normal camera calibration. This will be done by finding the chessboards in the provided grayscale
     images.
@@ -23,7 +23,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
             the process of corner position refinement stops either after criteria.maxCount iterations or when
             the corner position moves by less than criteria.epsilon on some iteration.
             If None the criteria will be set to (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        calibrate_camera_flags (int): The flags used in cv2.calibrateCameraExtended. Default flags CALIB_RATIONAL_MODEL, CALIB_THIN_PRISM_MODEL and CALIB_TILTED_MODEL. Flages tehre can be used:
+        flags (int): The flags used in cv2.calibrateCameraExtended. Default flags CALIB_RATIONAL_MODEL, CALIB_THIN_PRISM_MODEL and CALIB_TILTED_MODEL. Flages tehre can be used:
             CALIB_USE_INTRINSIC_GUESS cameraMatrix contains valid initial values of fx, fy, cx, cy that are optimized further. Otherwise, (cx, cy) is initially set to the image center ( imageSize is used), and focal distances are computed in a least-squares fashion. Note, that if intrinsic parameters are known, there is no need to use this function just to estimate extrinsic parameters. Use solvePnP instead.
             CALIB_FIX_PRINCIPAL_POINT The principal point is not changed during the global optimization. It stays at the center or at a different location specified when CALIB_USE_INTRINSIC_GUESS is set too.
             CALIB_FIX_ASPECT_RATIO The functions considers only fy as a free parameter. The ratio fx/fy stays the same as in the input cameraMatrix . When CALIB_USE_INTRINSIC_GUESS is not set, the actual input values of fx and fy are ignored, only their ratio is computed and used further.
@@ -67,7 +67,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
     objp = np.zeros((1, np.product(pattern_size[:2]), 3), np.float32)
     objp[0, :, :2] = np.mgrid[0:pattern_size[0], 0:pattern_size[1]].transpose().reshape(-1, 2)
 
-    # Arrays to hold the object points and coner point for all the chessboards
+    # Arrays to hold the object points and corner point for all the chessboards
     obj_points = []
     img_points = []
 
@@ -78,7 +78,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
         iter = gray_imgs
 
     for i, gray_img in enumerate(iter):
-        # Find roff coners in the images
+        # Find roof corners in the images
         pattern_was_found, corners = cv2.findChessboardCorners(gray_img, pattern_size)
 
         # If there was a chessboard in the image
@@ -86,17 +86,17 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
             # Add object points for the chessboard
             obj_points.append(objp)
 
-            # Find better sub pix position for the coners in the roff coners neighbourhood
+            # Find better sub pix position for the corners in the roof corners neighbourhood
             new_better_corners = cv2.cornerSubPix(gray_img, corners, win_size, zero_zone, criteria)
 
-            # Add the better coners
+            # Add the better corners
             img_points.append(new_better_corners)
 
     if verbose == 1:
         print("Doing camera calibrate")
 
-    # Do the camera calibrtions from the object points and coners found in the imagese
+    # Do the camera calibrations from the object points and corners found in the images
 
-    retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors = cv2.calibrateCameraExtended(obj_points, img_points, (gray_imgs[0].shape[1], gray_imgs[0].shape[0]), cameraMatrix=None, distCoeffs=None, flags=calibrate_camera_flags)
+    retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors = cv2.calibrateCameraExtended(obj_points, img_points, (gray_imgs[0].shape[1], gray_imgs[0].shape[0]), cameraMatrix=None, distCoeffs=None, flags=flags)
 
     return retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, np.array(obj_points), np.array(img_points)
