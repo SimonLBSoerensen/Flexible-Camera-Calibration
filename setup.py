@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-     name='fcc',
+     name='flexible-camera-calibration',
      version='0.1',
      author="Simon L. B. Sørensen, Oliver H. Vea, Malte N. Jensen and Jakob Yde-Madsen",
      author_email="simso16@student.sdu.dk",
