@@ -131,3 +131,4 @@ dmypy.json
 #Extras
 /OldSchoolCC/big_cal.png
 /.idea/
+/venvs/
