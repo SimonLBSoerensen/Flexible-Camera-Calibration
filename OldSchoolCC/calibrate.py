@@ -29,8 +29,8 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
             CALIB_ZERO_TANGENT_DIST Tangential distortion coefficients (p_1, p_2) are set to zeros and stay zero.
             CALIB_FIX_K1,...,CV_CALIB_FIX_K6 The corresponding radial distortion coefficient is not changed during the optimization. If CV_CALIB_USE_INTRINSIC_GUESS is set, the coefficient from the supplied distCoeffs matrix is used. Otherwise, it is set to 0.
             CALIB_RATIONAL_MODEL Coefficients k4, k5, and k6 are enabled. To provide the backward compatibility, this extra flag should be explicitly specified to make the calibration function use the rational model and return 8 coefficients. If the flag is not set, the function computes and returns only 5 distortion coefficients.
-        verbose (int): If verbose is 1 there will be log like printouts if 0 no printouts
-
+        verbose (int): 0, or 1. Verbosity mode.
+                        0 = silent, 1 = progress bar and print out
     Returns:
         ret (float): The RMS re-projection error in pixels
         camera_matrix (ndarray): Output 3x3 floating-point camera matrix
