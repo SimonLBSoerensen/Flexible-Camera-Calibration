@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="fcc-pkg-SimonLBS",
-    version="0.0.1",
+    name="flexiblecc",
+    version="0.0.4",
     author="Simon L. B. Sørensen and contributors",
     author_email="simonlyckbjaert@hotmail.com",
     description="Flexible Camera Calibration",
@@ -20,5 +20,9 @@ setuptools.setup(
     ],
     keywords="camera calibration",
     python_requires='>=3.6',
-     install_requires=["numpy", "opencv-python", "tqdm"],
+    license='MIT',
+    install_requires=["numpy", "opencv-python>=3.1", "tqdm"],
 )
+
+#python setup.py sdist bdist_wheel
+#python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*

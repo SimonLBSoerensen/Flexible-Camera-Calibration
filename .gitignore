@@ -129,6 +129,6 @@ dmypy.json
 .pyre/
 
 #Extras
-/OldSchoolCC/big_cal.png
+/ flexiblecc/OldSchoolCC/big_cal.png
 /.idea/
 /venvs/
