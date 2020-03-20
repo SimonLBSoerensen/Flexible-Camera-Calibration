@@ -5,14 +5,14 @@ from collections import Iterable
 
 
 def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, -1), criteria=None,
-                     calibrate_camera_flags=cv2.CALIB_RATIONAL_MODEL):
+                     calibrate_camera_flags=cv2.CALIB_RATIONAL_MODEL, verbose=0):
     """
     Will do a normal camera calibration. This will be done by finding the chessboards in the provided grayscale
     images. ret, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera(gray_imgs, pattern_size, win_size=(10,
     10), zero_zone=(-1, -1), criteria=None, calibrate_camera_flags=cv2.CALIB_RATIONAL_MODEL)
 
     Arguments:
-        gray_imgs (iterable): Array there contains the images with chessboards. The images has to be in grayscale colorspace
+        gray_imgs (iterable): Array there contains the images with chessboards. The images has to be in grayscale colorspace and in a "int" datatype
         pattern_size (tuple): Number of inner corners per a chessboard row and column
         win_size (tuple): Half of the side length of the search window
         zero_zone (tuple): Half of the size of the dead region in the middle of the search zone over which the summation
@@ -29,6 +29,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
             CALIB_ZERO_TANGENT_DIST Tangential distortion coefficients (p_1, p_2) are set to zeros and stay zero.
             CALIB_FIX_K1,...,CV_CALIB_FIX_K6 The corresponding radial distortion coefficient is not changed during the optimization. If CV_CALIB_USE_INTRINSIC_GUESS is set, the coefficient from the supplied distCoeffs matrix is used. Otherwise, it is set to 0.
             CALIB_RATIONAL_MODEL Coefficients k4, k5, and k6 are enabled. To provide the backward compatibility, this extra flag should be explicitly specified to make the calibration function use the rational model and return 8 coefficients. If the flag is not set, the function computes and returns only 5 distortion coefficients.
+        verbose (int): If verbose is 1 there will be log like printouts if 0 no printouts
 
     Returns:
         ret (float): The RMS re-projection error in pixels
@@ -59,7 +60,13 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
     obj_points = []
     img_points = []
 
-    for i, gray_img in enumerate(tqdm(gray_imgs)):
+    if verbose == 1:
+        iter = tqdm(gray_imgs)
+        print("Finding chessboard pattern in the images")
+    else:
+        iter = gray_imgs
+
+    for i, gray_img in enumerate(iter):
         # Find roff coners in the images
         pattern_was_found, corners = cv2.findChessboardCorners(gray_img, pattern_size)
 
@@ -73,6 +80,9 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
 
             # Add the better coners
             img_points.append(new_better_corners)
+
+    if verbose == 1:
+        print("Doing camera calibrate")
 
     # Do the camera calibrtions from the object points and coners found in the imagese
     ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points,
