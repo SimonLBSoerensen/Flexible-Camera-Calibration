@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="flexiblecc",
-    version="0.0.5",
+    version="0.0.7",
     author="Simon L. B. Sørensen and contributors",
     author_email="simonlyckbjaert@hotmail.com",
     description="Flexible Camera Calibration",
@@ -21,8 +21,9 @@ setuptools.setup(
     keywords="camera calibration",
     python_requires='>=3.6',
     license='MIT',
-    install_requires=["numpy", "opencv-python>=3.1", "tqdm"],
+    install_requires=["numpy", "opencv-python>=3.1", "tqdm", "matplotlib"],
 )
 
 #python setup.py sdist bdist_wheel
 #python -m twine upload dist/*
+
