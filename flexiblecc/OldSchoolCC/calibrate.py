@@ -108,6 +108,18 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
 
 
 def plot_distort(cameraMatrix, distCoeffs, image_size, step=10, contour_n_levels=None):
+    """
+    Plots the distorsion discrept width distCoeffs
+    Arguments:
+        cameraMatrix (ndarray): 3x3 floating-point camera matrix
+        distCoeffs (ndarray): vector of distortion coefficients of 4, 5, 8, 12 or 14 elements
+            (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]])
+        image_size (tuple): The size of the image from the camera of length 2
+        step (int): Grid step size for undistorted calculations over the image
+        contour_n_levels (int/array): Determines the number and positions of the contour lines / regions. If an int n, use n data intervals; i.e. draw n+1 contour lines. The level heights are automatically chosen. If array-like, draw contour lines at the specified levels. The values must be in increasing order.
+    """
+    assert len(image_size) == 2 and isinstance(image_size, tuple), "image_size has to be a tuple of length 2"
+
     # Make a grid of point there spread over the image
     gridrange = (np.arange(image_size[0], step=step), np.arange(image_size[1], step=step))
     points = np.array(np.meshgrid(*gridrange)).transpose().reshape(-1, 2).astype(np.float32)
