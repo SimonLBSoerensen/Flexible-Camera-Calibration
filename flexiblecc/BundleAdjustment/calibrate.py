@@ -190,7 +190,7 @@ def plot_distort(cameraMatrix, distCoeffs, image_size, step=10, contour_n_levels
 
     plt.subplot(1, 2, 2)
     plt.title("Angle between distorted and undistorted contour [deg]")
-    CS = plt.contour(Y, X, angels_grid, levels=contour_n_levels)
+    CS = plt.contour(X, Y, angels_grid, levels=contour_n_levels)
     plt.clabel(CS, inline=1, fontsize=10)
 
     plt.xticks([], [])
@@ -200,6 +200,6 @@ def plot_distort(cameraMatrix, distCoeffs, image_size, step=10, contour_n_levels
     asp /= np.abs(np.diff(im.axes.get_xlim())[0] / np.diff(im.axes.get_ylim())[0])
     CS.ax.set_aspect(asp)
 
-    plt.gca().invert_yaxis()
+    plt.gca().invert_xaxis()
 
     plt.show()
