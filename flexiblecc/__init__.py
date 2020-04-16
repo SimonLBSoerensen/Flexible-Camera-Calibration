@@ -1,1 +1,1 @@
-from . import BSpline, OldSchoolCC
+from . import Metrics, BSpline, OldSchoolCC

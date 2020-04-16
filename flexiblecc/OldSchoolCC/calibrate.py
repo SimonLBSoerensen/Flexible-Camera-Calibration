@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from tqdm import tqdm
-from collections.abc import Iterable
+from collections.abc import Iterable, Callable
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -107,99 +107,4 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
         obj_points), np.array(img_points)
 
 
-def plot_distort(cameraMatrix, distCoeffs, image_size, step=10, contour_n_levels=None):
-    """
-    Plots the distorsion discrept width distCoeffs
-    Arguments:
-        cameraMatrix (ndarray): 3x3 floating-point camera matrix
-        distCoeffs (ndarray): vector of distortion coefficients of 4, 5, 8, 12 or 14 elements
-            (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]])
-        image_size (tuple): The size of the image from the camera of length 2
-        step (int): Grid step size for undistorted calculations over the image
-        contour_n_levels (int/array): Determines the number and positions of the contour lines / regions. If an int n, use n data intervals; i.e. draw n+1 contour lines. The level heights are automatically chosen. If array-like, draw contour lines at the specified levels. The values must be in increasing order.
-    """
-    assert len(image_size) == 2 and isinstance(image_size, tuple), "image_size has to be a tuple of length 2"
 
-    # Make a grid of point there spread over the image
-    gridrange = (np.arange(image_size[0], step=step), np.arange(image_size[1], step=step))
-    points = np.array(np.meshgrid(*gridrange)).transpose().reshape(-1, 2).astype(np.float32)
-
-    # Calculate the undistorted points
-    undistort_points = cv2.undistortPoints(points, cameraMatrix, distCoeffs, P=cameraMatrix).reshape(-1, 2)
-
-    # Calculate the difference between the points and there undistorted counter part
-    diff = points - undistort_points
-
-    # Calculate the euclidean for the difference
-    errors = np.linalg.norm(diff, axis=1)
-
-    # Reshape the errors to the image grid size
-    X, Y = np.mgrid[0:len(gridrange[0]), 0:len(gridrange[1])]
-    errors_grid = errors.reshape(X.shape)
-
-    # Plot the euclidean distance in pixels between distorted and undistorted
-    plt.figure(figsize=(20, 10))
-
-    plt.subplot(1, 2, 1)
-    ax = plt.gca()
-    plt.title("Euclidean distance in pixels between distorted and undistorted")
-    im = plt.imshow(errors.reshape([len(g) for g in gridrange]))
-    plt.xticks([], [])
-    plt.yticks([], [])
-
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(im, cax=cax)
-
-    plt.subplot(1, 2, 2)
-    plt.title("Euclidean distance in pixels between distorted and undistorted contour")
-    CS = plt.contour(X, Y, errors_grid, levels=contour_n_levels)
-    plt.clabel(CS, inline=1, fontsize=10)
-
-    plt.xticks([], [])
-    plt.yticks([], [])
-
-    asp = np.diff(CS.ax.get_xlim())[0] / np.diff(CS.ax.get_ylim())[0]
-    asp /= np.abs(np.diff(im.axes.get_xlim())[0] / np.diff(im.axes.get_ylim())[0])
-    CS.ax.set_aspect(asp)
-
-    plt.gca().invert_xaxis()
-
-    plt.show()
-
-    plt.figure(figsize=(20, 10))
-
-    # Find the angels the distorted points are moved with
-    angels = np.array([np.angle(el[0] + el[1] * 1j, deg=True) for el in diff])
-
-    # Reshape the angels to the image grid size
-    X, Y = np.mgrid[0:len(gridrange[0]), 0:len(gridrange[1])]
-    angels_grid = angels.reshape(X.shape)
-
-    # Plot the angle between distorted and undistorted
-    plt.subplot(1, 2, 1)
-    ax = plt.gca()
-    plt.title("Angle between distorted and undistorted [deg]")
-    im = plt.imshow(angels.reshape([len(g) for g in gridrange]), cmap="hsv")
-    plt.xticks([], [])
-    plt.yticks([], [])
-
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(im, cax=cax)
-
-    plt.subplot(1, 2, 2)
-    plt.title("Angle between distorted and undistorted contour [deg]")
-    CS = plt.contour(Y, X, angels_grid, levels=contour_n_levels)
-    plt.clabel(CS, inline=1, fontsize=10)
-
-    plt.xticks([], [])
-    plt.yticks([], [])
-
-    asp = np.diff(CS.ax.get_xlim())[0] / np.diff(CS.ax.get_ylim())[0]
-    asp /= np.abs(np.diff(im.axes.get_xlim())[0] / np.diff(im.axes.get_ylim())[0])
-    CS.ax.set_aspect(asp)
-
-    plt.gca().invert_yaxis()
-
-    plt.show()
