@@ -1,1 +1,2 @@
-from .distorsion import *
+from .distorsion import plot_distort
+
