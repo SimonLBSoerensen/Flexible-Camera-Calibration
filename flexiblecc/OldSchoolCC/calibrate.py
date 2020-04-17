@@ -4,12 +4,12 @@ from tqdm import tqdm
 from collections.abc import Iterable, Callable
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
+import os
 
 def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, -1), criteria=None,
                      flags=(cv2.CALIB_RATIONAL_MODEL +
                             cv2.CALIB_THIN_PRISM_MODEL +
-                            cv2.CALIB_TILTED_MODEL), verbose=0):
+                            cv2.CALIB_TILTED_MODEL), verbose=0, draw_chessboards=None):
     """
     Will do a normal camera calibration. This will be done by finding the chessboards in the provided grayscale
     images.
@@ -53,6 +53,7 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
         perViewErrors (): Vector of the RMS re-projection error estimated for each pattern view
         objPoints (ndarray): Vector of vectors of calibration pattern points in the calibration pattern coordinate space
         imgPoints (ndarray): Vector of vectors of the projections of calibration pattern points
+        draw_chessboards (str): The file path to save draw chessboards images. If None it will not save any
     """
 
     assert isinstance(gray_imgs, Iterable), "gray_imgs has to be a iterable there consists of the grayscale images"
@@ -64,6 +65,9 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     else:
         assert isinstance(criteria, tuple), "criteria has to be a tuple"
+
+    if draw_chessboards is not None:
+        os.makedirs(draw_chessboards)
 
     # Object points for a chessboard
     objp = np.zeros((1, np.product(pattern_size[:2]), 3), np.float32)
@@ -90,6 +94,14 @@ def calibrate_camera(gray_imgs, pattern_size, win_size=(10, 10), zero_zone=(-1, 
 
             # Find better sub pix position for the corners in the roof corners neighbourhood
             new_better_corners = cv2.cornerSubPix(gray_img, corners, win_size, zero_zone, criteria)
+
+            if draw_chessboards is not None:
+                img_first = cv2.drawChessboardCorners(gray_img.copy(), pattern_size, corners,
+                                                       pattern_was_found)
+                img_better = cv2.drawChessboardCorners(gray_img.copy(), pattern_size, new_better_corners,
+                                                       pattern_was_found)
+                cv2.imwrite(os.path.join(draw_chessboards, "{}_first.png".format(i)), img_first)
+                cv2.imwrite(os.path.join(draw_chessboards, "{}_better.png".format(i)), img_better)
 
             # Add the better corners
             img_points.append(new_better_corners)
