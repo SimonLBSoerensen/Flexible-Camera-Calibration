@@ -5,6 +5,8 @@ from scipy.optimize import least_squares
 from tqdm import tqdm
 
 
+# FIX DUMB STUFF WITH GRID SIZE (CHECKERBOARD ALWAYS 12X12, BUT NOT B-SPLINE)
+
 def forward_project(n_images, rvecs, tvecs, grid_width, grid_height, n_grid_points):
 
     grid = np.zeros((n_grid_points, 3))
@@ -91,3 +93,4 @@ n_images = 94
 image_size = (1600, 1200)
 
 bundle_adjustment(rvecs, tvecs, n_images, points_2D, grid_width, grid_height, image_size)
+

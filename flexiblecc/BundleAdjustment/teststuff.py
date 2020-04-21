@@ -60,10 +60,20 @@ for i in range(len(points_3D)):
 
     #if i in bad_images:
     #ax.plot3D(tvecs[i][0], tvecs[i][1], tvecs[i][2], 'ro')
+
+    rot_mat = cv2.Rodrigues(rvecs[i])[0]
+    p = np.dot(rot_mat, -tvecs[i])
+
     if(i == 38):
-        ax.plot3D(-tvecs[i][0], -tvecs[i][1], -tvecs[i][2], 'gx')
+        ax.plot3D(p[0], p[1], p[2], 'gx')
     else:
-        ax.plot3D(-tvecs[i][0], -tvecs[i][1], -tvecs[i][2], 'rx')
+        ax.plot3D(p[0], p[1], p[2], 'rx')
+
+
+    #if(i == 38):
+    #    ax.plot3D(-tvecs[i][0], -tvecs[i][1], -tvecs[i][2], 'gx')
+    #else:
+    #    ax.plot3D(-tvecs[i][0], -tvecs[i][1], -tvecs[i][2], 'rx')
 
 plt.show()
 
