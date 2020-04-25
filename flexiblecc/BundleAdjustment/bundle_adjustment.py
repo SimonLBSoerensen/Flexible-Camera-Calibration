@@ -186,8 +186,9 @@ def bundle_adjustment(p):
     A = None
     if p['ls_sparsity']:
         A = get_sparsity_matrix(n_images, points_2D.shape[1], p['cm_shape'], points_2D, p['image_size'])
-        plt.spy(A, aspect='auto')
-        plt.show()
+        #plt.spy(A, aspect='auto')
+        #plt.show()
+        
     res = least_squares(
         fun=calc_residuals, 
         x0=ba_params, 
