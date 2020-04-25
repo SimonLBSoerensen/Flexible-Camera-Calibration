@@ -226,7 +226,7 @@ if __name__ == '__main__':
         'checkerboard_shape': (12, 12),
         'cm_dimensions': (1600, 1200),
         'cm_shape': (5,4,3),
-        'cm_order': 2,
+        'cm_order': 3,
         'cm_fit_control_points': True,
         'cm_knot_method': 'open_uniform',
         'cm_min_basis_value': 0.001,
@@ -237,7 +237,8 @@ if __name__ == '__main__':
         'ls_ftol': 1e-8,
         'ls_gtol': 1e-8,
         'ls_method': 'trf',
-        'ba_initialization_file': 'C:/Users/Jakob/Documents/GitHub/Flexible-Camera-Calibration/flexiblecc/BundleAdjustment/savedOldSchool.npz',
+        'ba_initialization_file': 'initial_calibration_results.npz',
+        'seed': None,
         'os_info': gethostname(),
         'not_default': []
     }
@@ -253,6 +254,9 @@ if __name__ == '__main__':
         else:
             print("key '{}' is not in parameters".format(key))
 
+    if parameters['seed'] != None:
+        np.random.seed(parameters['seed'])
+        
     res = bundle_adjustment(parameters)
 
     for key in res:
