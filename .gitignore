@@ -131,3 +131,7 @@ dmypy.json
 #Extras
 /.idea/
 /venvs/
+
+#Testfiles
+*.pickle
+*.json
