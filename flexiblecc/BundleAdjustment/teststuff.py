@@ -37,7 +37,9 @@ retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDevi
 np.savez("savedOldSchool", rvecs, tvecs, points_3D, points_2D)
 '''
 
-rvecs, tvecs, points_3D, points_2D = dict(np.load("savedOldSchool.npz")).values()
+rvecs, tvecs, checkerboard_points, points_2D = dict(np.load("savedOldSchool.npz")).values()
+
+checkerboard_points = checkerboard_points.reshape(checkerboard_points.shape[0], checkerboard_points.shape[2], checkerboard_points.shape[3], 1)
 
 bad_images = np.array([4,5,6,7,8,17,18,19,20,21,22,23,35,36,37,38,40,41,42,43,44,53,54,55,56,61,62,63,64,68,73,74,75,81,82,83,84,85,93,94,39])
 bad_images = bad_images - 1
@@ -53,10 +55,10 @@ ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_zlabel('z')
 
-cam1_points_3D = np.reshape(points_3D[0], (-1,3))
+cam1_points_3D = np.reshape(checkerboard_points[0], (-1,3))
 
 ax.plot3D(cam1_points_3D[:,0], cam1_points_3D[:,1], cam1_points_3D[:,2], 'bo')
-for i in range(len(points_3D)):
+for i in range(len(checkerboard_points)):
 
     #if i in bad_images:
     #ax.plot3D(tvecs[i][0], tvecs[i][1], tvecs[i][2], 'ro')
@@ -95,7 +97,7 @@ forward_projected_rays = np.ndarray((n_images, grid_size, 3, 1))
 for i,(r,t) in enumerate(zip(rvecs, tvecs)):
     rotation_matrix = cv2.Rodrigues(r)[0]
     for j in range(grid_size):
-        forward_projected_rays[i,j] = np.dot(rotation_matrix.T, grid[j]-t)
+        forward_projected_rays[i,j] = np.dot(rotation_matrix, checkerboard_points[i,j])+t
 
 
 
