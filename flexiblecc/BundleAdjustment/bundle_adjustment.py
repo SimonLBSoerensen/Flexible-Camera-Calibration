@@ -3,7 +3,7 @@ import cv2
 import time, datetime
 import json
 from matplotlib import pyplot as plt
-from central_model import CentralModel, fit_central_model
+from flexiblecc.BSpline.central_model import CentralModel, fit_central_model
 from scipy.optimize import least_squares
 from scipy.sparse import lil_matrix, csr_matrix
 from socket import gethostname

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import least_squares
 from tqdm import tqdm
-import flexiblecc.BundleAdjustment.knot_generators as kg
+import flexiblecc.BundleAdjustment.to_be_removed_knot_generators as kg
 import multiprocessing
 
 
