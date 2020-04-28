@@ -134,4 +134,3 @@ dmypy.json
 
 #Testfiles
 *.pickle
-*.json
