@@ -1,11 +1,12 @@
 import numpy as np
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 from tqdm import tqdm
-import flexiblecc.BSpline.knot_generators as kg
 import multiprocessing
+import pickle
 
+import knot_generators as kg
 
-# The implementation of this B-spline-based camera model is based on the description in the
+# The implementation of this B-spline-based camera model is based on the description in the 
 # article "Generalized B-spline Camera Model" by Johannes Beck and Christoph Stiller.
 
 # Resources:
@@ -13,8 +14,7 @@ import multiprocessing
 # Notes of how to construct b-splines: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/surface/bspline-construct.html
 
 class CentralModel:
-    def __init__(self, image_dimensions, grid_dimensions, control_points, order, knot_method='open_uniform',
-                 min_basis_value=0.001, end_divergence=1e-10):
+    def __init__(self, image_dimensions, grid_dimensions, control_points, order, knot_method = 'open_uniform', min_basis_value=0.001, end_divergence = 1e-10):
         """Initializes a CentralModel object. \n
 
         Keyword arguments: \n
@@ -27,14 +27,10 @@ class CentralModel:
         end_divergence: a small term added to the tails of the knot vector when 'open_uniform' is used. Allows for sampling at the endpoints of the spline.
         """
         assert knot_method in ['open_uniform', 'uniform'], 'knot method should be one of the implemented methods.'
-        assert isinstance(image_dimensions, tuple) and len(
-            image_dimensions) == 2, 'image_dimensions must be a 2-dimensional tuple.'
-        assert isinstance(grid_dimensions, tuple) and len(
-            grid_dimensions) == 2, 'grid_dimensions must be a 2-dimensional tuple.'
-        assert isinstance(control_points, np.ndarray) and len(control_points.shape) == 3 and control_points.shape[
-            -1] == 3, 'grid must be a 3-dimensional numpy array with a depth of 3.'
-        assert control_points.shape[0] > order and control_points.shape[
-            1] > order, 'order must be smaller than grid size.'
+        assert isinstance(image_dimensions, tuple) and len(image_dimensions) == 2, 'image_dimensions must be a 2-dimensional tuple.'
+        assert isinstance(grid_dimensions, tuple) and len(grid_dimensions) == 2, 'grid_dimensions must be a 2-dimensional tuple.'
+        assert isinstance(control_points, np.ndarray) and len(control_points.shape) == 3 and control_points.shape[-1] == 3, 'grid must be a 3-dimensional numpy array with a depth of 3.'
+        assert control_points.shape[0] > order and control_points.shape[1] > order, 'order must be smaller than grid size.'
 
         self.image_width = image_dimensions[0]
         self.image_height = image_dimensions[1]
@@ -79,7 +75,7 @@ class CentralModel:
                 return 1
             else:
                 return 0
-
+        
         # Equation 3
         term1a = x - t[i]
         term1b = t[i + k] - t[i]
@@ -124,8 +120,7 @@ class CentralModel:
         u: Horizontal pixel coordinate of sample. \n
         v: Vertical pixel coordinate of sample. 
         """
-        assert not (isinstance(u, (np.ndarray, list)) or isinstance(v, (np.ndarray, list))) and all(
-            np.isreal([u, v])), 'u and v must be numbers.'
+        assert not (isinstance(u, (np.ndarray, list)) or isinstance(v, (np.ndarray, list))) and all(np.isreal([u, v])), 'u and v must be numbers.'
 
         u = self._normalize(u, self.grid_width, self.image_width)
         v = self._normalize(v, self.grid_height, self.image_height)
@@ -155,12 +150,11 @@ class CentralModel:
         samples = np.ndarray((self.n, self.m, 3))
         for i in range(0, self.n):
             for j in range(0, self.m):
-                samples[i, j] = self.sample(pts[i, j, 0], pts[i, j, 1])
+                samples[i,j] = self.sample(pts[i,j,0], pts[i,j,1])
 
         return samples
 
-    def _task(self, i, pts, output):
-        output.put(np.array([np.hstack([pt[0], self.sample(pt[1], pt[2])]) for pt in pts]))
+    def _task(self, i, pts, output): output.put(np.array([np.hstack([pt[0], self.sample(pt[1], pt[2])]) for pt in pts]))
 
     def sample_many(self, pts, threads=1):
         """Used to sample the b-spline surface at multiple points. This method is multi-threaded and will start additional processes even when thread is set to 1. \n
@@ -170,33 +164,29 @@ class CentralModel:
         threads: Amount of processes to spawn. 
         """
 
-        assert isinstance(pts, np.ndarray) and len(pts.shape) == 2 and pts.shape[
-            1] == 2, '\'pts\' should be a numpy array of shape (n,2) containing the points for which to sample the b-spline.'
-        assert isinstance(threads,
-                          int) and threads >= 1, '\'threads\' should be a positive integer. Got object with type {}.'.format(
-            type(threads))
+        assert isinstance(pts, np.ndarray) and len(pts.shape) == 2 and pts.shape[1] == 2, '\'pts\' should be a numpy array of shape (n,2) containing the points for which to sample the b-spline.'
+        assert isinstance(threads, int) and threads >= 1, '\'threads\' should be a positive integer. Got object with type {}.'.format(type(threads))
 
         results = multiprocessing.Queue()
 
         _pts = np.ndarray((len(pts), 3))
-        _pts[:, 0] = range(len(pts))
-        _pts[:, 1:] = pts
+        _pts[:,0] = range(len(pts))
+        _pts[:,1:] = pts
 
         split = np.split(_pts, threads)
 
-        processes = [multiprocessing.Process(target=self._task, args=(i, split[threads - i - 1], results)) for i in
-                     range(threads)]
+        processes = [multiprocessing.Process(target=self._task, args=(i, split[threads - i - 1], results)) for i in range(threads)]
 
-        for process in processes:
+        for process in processes: 
             process.start()
 
         results = np.vstack([results.get() for i in range(threads)])
-        results = results[results[:, 0].argsort()]
+        results = results[results[:,0].argsort()]
 
-        for process in processes:
+        for process in processes: 
             process.join()
 
-        return results[:, :-1]
+        return results[:,:-1]
 
     def active_control_points(self, u, v):
         """Returns the indeces of the control points that are used to calculate the point with the given pixel coordinates. \n
@@ -205,35 +195,50 @@ class CentralModel:
         u: Horizontal pixel coordinate. \n
         v: Vertical pixel coordinate. 
         """
-        assert not (isinstance(u, (np.ndarray, list)) or isinstance(v, (np.ndarray, list))) and all(
-            np.isreal([u, v])), 'u and v must be numbers.'
+        assert not (isinstance(u, (np.ndarray, list)) or isinstance(v, (np.ndarray, list))) and all(np.isreal([u, v])), 'u and v must be numbers.'
 
         is_even = lambda x: x % 2 == 0
-
+        
         dx = self._normalize(u, self.grid_width, self.image_width)
         dy = self._normalize(v, self.grid_height, self.image_height)
 
         px = (self.a.shape[0] - 1) * dx
         py = (self.a.shape[1] - 1) * dy
 
-        between = lambda a, x, b: max(min(x, b), a)
+        between = lambda a, x, b: max(min(x,b),a)
 
         px = between(np.floor(self.order / 2), px, self.a.shape[0] - 1 - np.floor(self.order / 2))
         py = between(np.floor(self.order / 2), py, self.a.shape[1] - 1 - np.floor(self.order / 2))
 
         if is_even(self.order):
-            x = np.arange(np.ceil(-0.5 * (self.order + 1)), np.ceil(0.5 * self.order) + 1) + np.round(px)
-            y = np.arange(np.ceil(-0.5 * (self.order + 1)), np.ceil(0.5 * self.order) + 1) + np.round(py)
+            x = np.arange(np.ceil(-0.5*(self.order + 1)), np.ceil(0.5*self.order) + 1) + np.round(px)
+            y = np.arange(np.ceil(-0.5*(self.order + 1)), np.ceil(0.5*self.order) + 1) + np.round(py)
 
         else:
-            x = np.arange(np.ceil(-0.5 * self.order), np.ceil(0.5 * self.order) + 1) + np.floor(px)
-            y = np.arange(np.ceil(-0.5 * self.order), np.ceil(0.5 * self.order) + 1) + np.floor(py)
-
+            x = np.arange(np.ceil(-0.5*self.order), np.ceil(0.5*self.order) + 1) + np.floor(px)
+            y = np.arange(np.ceil(-0.5*self.order), np.ceil(0.5*self.order) + 1) + np.floor(py)
+            
         return np.transpose(np.meshgrid(x, y))
+    
+    def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', options={}):
+        def fun(params, ray):
+            u, v = params[0], params[1]
+            s = self.sample(u, v)
 
+            return np.linalg.norm(s - ray)
 
-def fit_central_model(target_values, image_dimensions, grid_dimensions, order=3, knot_method='open_uniform',
-                      end_divergence=0, min_basis_value=1e-3, verbose=0, initial_values=None):
+        if not x0:
+            x0 = np.array([self.image_width/2, self.image_height/2])
+
+        bounds = None
+        if use_bounds:
+            bounds = np.array([(0, self.image_width), (0, self.image_height)])
+
+        res = minimize(fun, x0, args=(ray), bounds=bounds, method=method, options=options)
+
+        return res
+
+def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 3, knot_method = 'open_uniform', end_divergence = 0, min_basis_value = 1e-3, verbose = 0, initial_values = None):
     """Used to fit the control points so the spline interpolates between the values in 'target_values'. Returns the fitted CentralModel and the least squares fitting results. \n
 
     Keyword arguments: \n
@@ -247,21 +252,20 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order=3,
     verbose: Changes how much the function prints while running.\n
     initial_values: Optional numpy array with the shape of 'target_values'. Provides the initial control points to the least squares solver.
     """
-    if initial_values == None:
+    if initial_values == None: 
         initial_values = target_values
 
     assert target_values.shape == initial_values.shape, 'target_values and initial_values must have the same shape.'
 
     shape = target_values.shape
 
-    def fun(params, target_values, grid_shape, image_dimensions, grid_dimensions, order, knot_method, end_divergence,
-            min_basis_value):
+    def fun(params, target_values, grid_shape, image_dimensions, grid_dimensions, order, knot_method, end_divergence, min_basis_value):
         grid = np.reshape(params, grid_shape)
 
         cm = CentralModel(
-            image_dimensions=image_dimensions,
-            grid_dimensions=grid_dimensions,
-            control_points=grid,
+            image_dimensions=image_dimensions, 
+            grid_dimensions=grid_dimensions, 
+            control_points=grid, 
             order=order,
             knot_method=knot_method,
             end_divergence=end_divergence,
@@ -271,19 +275,17 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order=3,
         return target_values - grid_samples
 
     if verbose > 0:
-        print('Starting least squares fit.')
-
-    result = least_squares(fun, initial_values.ravel(), verbose=verbose, args=(
-    target_values.ravel(), shape, image_dimensions, grid_dimensions, order, knot_method, end_divergence,
-    min_basis_value))
-    target_values = np.reshape(target_values, (-1, 3))
+        print('Starting least squares fitting of CentralModel.')
+        
+    result = least_squares(fun, initial_values.ravel(), verbose=verbose, args=(target_values.ravel(), shape, image_dimensions, grid_dimensions, order, knot_method, end_divergence, min_basis_value))
+    target_values = np.reshape(target_values, (-1,3))
 
     ctrl = result['x'].reshape(shape)
 
     cm = CentralModel(
-        image_dimensions=image_dimensions,
-        grid_dimensions=grid_dimensions,
-        control_points=ctrl,
+        image_dimensions=image_dimensions, 
+        grid_dimensions=grid_dimensions, 
+        control_points=ctrl, 
         order=order,
         knot_method=knot_method,
         end_divergence=end_divergence,
@@ -292,37 +294,39 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order=3,
     return cm, result
 
 
+print('a')
+
 if __name__ == '__main__':
     import time
 
-    shape = (500, 500)
+    shape = (500,500)
 
     ## Multithreading Test
     if False:
         x = np.arange(shape[0])
         y = np.arange(shape[1])
-        pts = np.transpose(np.meshgrid(x, y)).reshape(-1, 2)
+        pts = np.transpose(np.meshgrid(x,y)).reshape(-1, 2)
 
         print('Test underway. It might take some time. Please wait...')
 
         start = time.time()
-        cm = CentralModel(shape, shape, np.random.normal(0, 1, (6, 6, 3)), 4)
+        cm = CentralModel(shape, shape, np.random.normal(0, 1, (6,6,3)), 4)
         _ = cm.sample_many(pts, 16)
         end = time.time()
 
         print('Threaded version used {:.2f} s. ({} iter/s)'.format(end - start, int(len(pts) / (end - start))))
 
         start = time.time()
-        cm = CentralModel(shape, shape, np.random.normal(0, 1, (6, 6, 3)), 4)
+        cm = CentralModel(shape, shape, np.random.normal(0, 1, (6,6,3)), 4)
         _ = cm.sample_many(pts, 1)
         end = time.time()
 
         print('Non-threaded version used {:.2f} s. ({} iter/s)'.format(end - start, int(len(pts) / (end - start))))
-
+    
     ## Sparsity Test
-    if True:
+    if False:
         dim = (200, 200)
-        grid = (5, 5, 3)
+        grid = (5,5,3)
 
         ctrl = np.random.normal(0, 1, grid)
 
@@ -333,6 +337,63 @@ if __name__ == '__main__':
         pts = []
 
         for i in range(n):
-            pts.append(cm.active_control_points(i * (dim[0] / (n - 1)), 100))
+            pts.append(cm.active_control_points(i * (dim[0] / (n-1)), 100))
 
-    pass
+    ## Forward sampling test
+    if True:
+        dim = (200, 200)
+        grid = (5,5,3)
+        order = 3
+        
+        ctrl = np.full(grid, 0)
+
+        for i, row in enumerate(ctrl):
+            for j, cell in enumerate(row):
+                ctrl[i, j, 0] = i
+                ctrl[i, j, 1] = j
+                ctrl[i, j, 2] = i * j
+
+        cm = CentralModel(dim, dim, ctrl, order)
+
+        res = cm.forward_sample(np.array([4, 2, 8]))
+
+        u, v = res['x']
+
+        s = cm.sample(u, v)
+        s2 = cm.sample(99.5, 199)
+
+    ## Real world forward sampling test
+    if True:
+        filename = r'D:\WindowsFolders\Documents\GitHub\Flexible-Camera-Calibration\flexiblecc\BundleAdjustment\json\res_2020-04-26_23-18-20.pickle'
+
+        with open(filename, 'rb') as file:
+            ctrl = np.array(pickle.load(file)['spline_grid'])
+
+        dim = (1600, 1200)
+        cm = CentralModel(dim, dim, ctrl, 2)
+
+        sample_point = (2, 2)
+        error_mean = 0
+        error_std = 0.0005
+
+        method = 'Powell'
+        #options = {'xtol': 1e-15, 'ftol': 1e-15}
+
+        ray = cm.sample(sample_point[0], sample_point[1])
+        print('Sampled model in coordinates {}, which resulted in ray {}.'.format(sample_point, ray))
+
+        # add noise
+        if False:
+            ray += np.random.normal(error_mean, error_std, 3)   
+            print('Added noise to ray. Now {}.'.format(ray))
+
+        print('using {}'.format(method))
+        try: 
+            u, v = cm.forward_sample(ray, method=method, options=options)['x']
+            error = (sample_point[0] - u, sample_point[1] - v)
+
+            print('Found coordinates {} for ray which deviates {} ({} norm).'.format((u, v), error, np.linalg.norm(error)))
+        except:
+            print('Method caused error.')
+
+        print('')
