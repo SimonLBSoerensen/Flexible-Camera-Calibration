@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import time, datetime
 import json
+import pickle
 from matplotlib import pyplot as plt
 from flexiblecc.BSpline.central_model import CentralModel, fit_central_model
 from flexiblecc.BundleAdjustment import initialization
@@ -12,21 +13,14 @@ from tqdm import tqdm
 from sys import argv
 
 
-def forward_project(n_images, rvecs, tvecs, grid_width, grid_height, n_grid_points):
+def forward_project(n_images, rvecs, tvecs, checkerboard_points):
     # TODO: make global, don't run all the time
-    grid = np.zeros((n_grid_points, 3))
-    meshgrid = np.transpose(np.meshgrid(np.arange(grid_width), np.arange(grid_height)))
 
-    meshgrid = np.reshape(meshgrid, (n_grid_points, 2))
-
-    grid[:, :-1] = meshgrid
-    grid = np.reshape(grid, grid.shape + (1,))
-
-    rays = np.ndarray((n_images, n_grid_points, 3, 1))
+    rays = np.ndarray((n_images, checkerboard_points.shape[1], 3, 1))
     for i, r, t in zip(range(n_images), rvecs, tvecs):
         rotation_matrix = cv2.Rodrigues(r)[0]
-        for j in range(n_grid_points):
-            rays[i, j] = np.dot(rotation_matrix.T, grid[j] - t)
+        for j in range(checkerboard_points.shape[1]):
+            rays[i, j] = np.dot(rotation_matrix, checkerboard_points[i,j]) + t
 
             # Normalize each ray
             rays[i, j] = np.divide(rays[i, j], np.linalg.norm(rays[i, j]))
@@ -34,7 +28,7 @@ def forward_project(n_images, rvecs, tvecs, grid_width, grid_height, n_grid_poin
     return rays
 
 
-def calc_residuals(parameters, p, n_images, points_2D, grid_width, grid_height, n_grid_points, image_size, cm_shape):
+def calc_residuals(parameters, p, n_images, points_2D, image_size, cm_shape, checkerboard_points):
     spline_grid = parameters[:np.prod(cm_shape)].reshape(cm_shape)
     rvecs = parameters[np.prod(cm_shape):][:n_images * 3].reshape((94, 3, 1))
     tvecs = parameters[np.prod(cm_shape) + n_images * 3:].reshape((94, 3, 1))
@@ -49,12 +43,12 @@ def calc_residuals(parameters, p, n_images, points_2D, grid_width, grid_height, 
         end_divergence=p['cm_end_divergence'])
 
     # Calculate forward projected rays
-    forward_projected_rays = forward_project(n_images, rvecs, tvecs, grid_width, grid_height, n_grid_points).ravel()
+    forward_projected_rays = forward_project(n_images, rvecs, tvecs, checkerboard_points).ravel()
 
     # Calculate backward projected rays (b_spline)
-    model_rays = np.ndarray((n_images, n_grid_points, 3))
+    model_rays = np.ndarray((n_images, checkerboard_points.shape[1], 3))
     for i, image_points in zip(range(n_images), points_2D):
-        for j, point_2D in zip(range(n_grid_points), image_points):
+        for j, point_2D in zip(range(checkerboard_points.shape[1]), image_points):
             model_rays[i, j] = b_spline_object.sample(point_2D[0, 0], point_2D[0, 1])
 
     model_rays = model_rays.ravel()
@@ -155,7 +149,9 @@ def old_grid_creation():
 def bundle_adjustment(p):
     start_time = time.time()
 
-    rvecs, tvecs, _, points_2D = dict(np.load(p['ba_initialization_file'])).values()
+    rvecs, tvecs, checkerboard_points, points_2D = dict(np.load(p['ba_initialization_file'])).values()
+
+    checkerboard_points = checkerboard_points.reshape(checkerboard_points.shape[0], checkerboard_points.shape[2], checkerboard_points.shape[3], 1)
 
     n_images = len(rvecs)
 
@@ -184,11 +180,9 @@ def bundle_adjustment(p):
                                     p=p,
                                     n_images=n_images,
                                     points_2D=points_2D,
-                                    grid_width=p['checkerboard_shape'][0],
-                                    grid_height=p['checkerboard_shape'][1],
-                                    n_grid_points=np.prod(p['checkerboard_shape']),
                                     image_size=p['image_size'],
-                                    cm_shape=p['cm_shape'])
+                                    cm_shape=p['cm_shape'],
+                                    checkerboard_points=checkerboard_points)
 
     A = None
     if p['ls_sparsity']:
@@ -208,11 +202,9 @@ def bundle_adjustment(p):
         args=(p,
               n_images,
               points_2D,
-              p['checkerboard_shape'][0],
-              p['checkerboard_shape'][1],
-              np.prod(p['checkerboard_shape']),
               p['image_size'],
-              p['cm_shape']))
+              p['cm_shape'],
+              checkerboard_points))
 
     duration = time.time() - start_time
 
@@ -220,12 +212,12 @@ def bundle_adjustment(p):
     rvecs = res.x[np.prod(p['cm_shape']):][:n_images * 3].reshape((94, 3, 1))
     tvecs = res.x[np.prod(p['cm_shape']) + n_images * 3:].reshape((94, 3, 1))
     res['initial_residuals'] = residuals_init
-    res['duration'] = duration
     res['start_grid'] = start_grid
     res['spline_grid'] = spline_grid
     res['rvecs'] = rvecs
     res['tvecs'] = tvecs
-    return res
+
+    return res, duration
 
 
 if __name__ == '__main__':
@@ -265,7 +257,7 @@ if __name__ == '__main__':
     if parameters['seed'] != None:
         np.random.seed(parameters['seed'])
 
-    res = bundle_adjustment(parameters)
+    res, duration = bundle_adjustment(parameters)
 
     for key in res:
         if isinstance(res[key], csr_matrix):
@@ -273,6 +265,9 @@ if __name__ == '__main__':
         if isinstance(res[key], np.ndarray):
             res[key] = res[key].tolist()
 
-    filename = 'json/' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.json'
-    with open(filename, 'w') as f:
-        json.dump({'parameters': parameters, 'results': res}, f, ensure_ascii=False, indent=4)
+    filename = 'tests/{}_' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '{}'
+    with open(filename.format('par', '.json'), 'w') as json_out:
+        json.dump({'parameters': parameters, 'duration': duration}, json_out, ensure_ascii=False, indent=4)
+
+    with open(filename.format('res', '.pickle'), 'wb') as pickle_out:
+        pickle.dump(res, pickle_out)

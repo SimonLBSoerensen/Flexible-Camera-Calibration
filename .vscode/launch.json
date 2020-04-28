@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Central Model",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/flexiblecc/BSpline/central_model.py",
+            "console": "externalTerminal",
+            "args": []
+        },
+        {
             "name": "Bundle Adjustment",
             "type": "python",
             "request": "launch",
