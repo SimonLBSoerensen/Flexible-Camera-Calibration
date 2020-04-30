@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/flexiblecc/BundleAdjustment/bundle_adjustment.py",
             "console": "externalTerminal",
-            "args": ["seed=0", "cm_fit_control_points=False"]
+            "args": ["seed=0", "cm_fit_control_points=False", "ba_initialization_file=D:\\WindowsFolders\\Documents\\GitHub\\Flexible-Camera-Calibration\\flexiblecc\\BundleAdjustment\\initial_calibration_results.npz"]
         }
     ]
 }

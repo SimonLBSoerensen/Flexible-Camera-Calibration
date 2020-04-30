@@ -28,7 +28,7 @@ def forward_project(n_images, rvecs, tvecs, checkerboard_points):
     return rays
 
 
-def calc_residuals(parameters, p, n_images, points_2D, image_size, cm_shape, checkerboard_points):
+def residuals_3d(parameters, p, n_images, points_2D, image_size, cm_shape, checkerboard_points):
     spline_grid = parameters[:np.prod(cm_shape)].reshape(cm_shape)
     rvecs = parameters[np.prod(cm_shape):][:n_images * 3].reshape((94, 3, 1))
     tvecs = parameters[np.prod(cm_shape) + n_images * 3:].reshape((94, 3, 1))
@@ -54,6 +54,29 @@ def calc_residuals(parameters, p, n_images, points_2D, image_size, cm_shape, che
     model_rays = model_rays.ravel()
 
     return forward_projected_rays - model_rays
+
+def residuals_2d(parameters, p, n_images, points_2D, image_size, cm_shape, checkerboard_points):
+    spline_grid = parameters[:np.prod(cm_shape)].reshape(cm_shape)
+    rvecs = parameters[np.prod(cm_shape):][:n_images * 3].reshape((94, 3, 1))
+    tvecs = parameters[np.prod(cm_shape) + n_images * 3:].reshape((94, 3, 1))
+    forward_projected_rays = forward_project(n_images, rvecs, tvecs, checkerboard_points)
+
+    b_spline_object = CentralModel(
+        image_dimensions=image_size,
+        grid_dimensions=image_size,
+        control_points=spline_grid,
+        order=p['cm_order'],
+        knot_method=p['cm_knot_method'],
+        min_basis_value=p['cm_min_basis_value'],
+        end_divergence=p['cm_end_divergence'])
+        
+    # Calculate backward projected rays (b_spline)
+    model_points = np.ndarray((n_images, checkerboard_points.shape[1], 2))
+    for i in tqdm(range(n_images), total=n_images):
+        for j in range(checkerboard_points.shape[1]):
+            model_points[i, j] = b_spline_object.forward_sample(forward_projected_rays[i, j, :, 0])
+
+    return model_points.ravel() - points_2D.ravel()
 
 
 def get_sparsity_matrix(n_images, n_points, b_spline_shape, points_2D, image_size):
@@ -176,7 +199,7 @@ def bundle_adjustment(p):
 
     ba_params = np.hstack((start_grid.ravel(), rvecs.ravel(), tvecs.ravel()))
 
-    residuals_init = calc_residuals(parameters=ba_params,
+    residuals_init = residuals_3d(parameters=ba_params,
                                     p=p,
                                     n_images=n_images,
                                     points_2D=points_2D,
@@ -191,7 +214,7 @@ def bundle_adjustment(p):
         # plt.show()
 
     res = least_squares(
-        fun=calc_residuals,
+        fun=residuals_3d,
         x0=ba_params,
         jac_sparsity=A,
         verbose=p['ls_verbose'],
@@ -246,11 +269,15 @@ if __name__ == '__main__':
     for arg in argv[1:]:
         key, value = arg.split('=')
         if key in parameters:
-            if parameters[key] != eval(value):
-                parameters['not_default'].append(key)
+            try:
+                if parameters[key] != eval(value):
+                    parameters['not_default'].append(key)
 
-            parameters[key] = eval(value)
-            print("key '{}' set to '{}' of type '{}'".format(key, parameters[key], type(parameters[key])))
+                parameters[key] = eval(value)
+                print("key '{}' set to '{}' of type '{}'".format(key, parameters[key], type(parameters[key])))
+            except:
+                parameters[key] = value
+                print("key '{}' set to '{}' of type '{}'".format(key, parameters[key], type(parameters[key])))
         else:
             print("key '{}' is not in parameters".format(key))
 
