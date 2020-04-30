@@ -156,8 +156,9 @@ class CentralModel:
 
     def _task(self, i, pts, output): output.put(np.array([np.hstack([pt[0], self.sample(pt[1], pt[2])]) for pt in pts]))
 
-    def sample_many(self, pts, threads=1):
-        """Used to sample the b-spline surface at multiple points. This method is multi-threaded and will start additional processes even when thread is set to 1. \n
+    def _sample_many(self, pts, threads=1):
+        """(DON'T USE THIS METHOD) 
+        Used to sample the b-spline surface at multiple points. This method is multi-threaded and will start additional processes even when thread is set to 1. \n
 
         Keyword arguments: \n
         pts: (n, 2) array of pixel coordinates. \n
@@ -220,23 +221,35 @@ class CentralModel:
             
         return np.transpose(np.meshgrid(x, y))
     
-    def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', options={}):
+    def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', tol=None, options={}, return_results=False):
+        """Returns the corresponding pixel coordinates for a given ray. \n
+
+        Keyword arguments: \n
+        ray: The projected ray of the point in the image plane. \n
+        x0: An initial guess on the position of the point. If set to none the center of the image is used. \n
+        use_bounds: Sets the image dimensions as bounds for the optimizer. \n
+        method: Optimization method from scipy's \'minimize\'. \n
+        options: Options for the optimization. See scipu's \'minimize\'. \n
+        return_points: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
+        """
         def fun(params, ray):
             u, v = params[0], params[1]
             s = self.sample(u, v)
 
             return np.linalg.norm(s - ray)
 
-        if not x0:
+        if x0 is None:
             x0 = np.array([self.image_width/2, self.image_height/2])
 
         bounds = None
-        if use_bounds:
+        if use_bounds and not method in ['Powell']:
             bounds = np.array([(0, self.image_width), (0, self.image_height)])
 
-        res = minimize(fun, x0, args=(ray), bounds=bounds, method=method, options=options)
+        res = minimize(fun, x0, args=(ray), tol=tol, bounds=bounds, method=method, options=options)
 
-        return res
+        if return_results:
+            return res
+        return res['x']
 
 def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 3, knot_method = 'open_uniform', end_divergence = 0, min_basis_value = 1e-3, verbose = 0, initial_values = None):
     """Used to fit the control points so the spline interpolates between the values in 'target_values'. Returns the fitted CentralModel and the least squares fitting results. \n
@@ -355,16 +368,18 @@ if __name__ == '__main__':
 
         cm = CentralModel(dim, dim, ctrl, order)
 
-        res = cm.forward_sample(np.array([4, 2, 8]))
+        ray = np.array([4, 2, 8])
 
-        u, v = res['x']
+        options = {'disp': True,'xtol': 1e-8, 'ftol': 1e-8}
+        u, v = cm.forward_sample(ray, method='Powell', tol=1e-8, options=options)
 
         s = cm.sample(u, v)
-        s2 = cm.sample(99.5, 199)
+
+        print(ray, s, ray-s)
 
     ## Real world forward sampling test
-    if True:
-        filename = r'D:\WindowsFolders\Documents\GitHub\Flexible-Camera-Calibration\flexiblecc\BundleAdjustment\json\res_2020-04-26_23-18-20.pickle'
+    if False:
+        filename = r'json\res_2020-04-26_23-18-20.pickle'
 
         with open(filename, 'rb') as file:
             ctrl = np.array(pickle.load(file)['spline_grid'])
@@ -389,7 +404,7 @@ if __name__ == '__main__':
 
         print('using {}'.format(method))
         try: 
-            u, v = cm.forward_sample(ray, method=method, options=options)['x']
+            u, v = cm.forward_sample(ray, method=method, options=options)
             error = (sample_point[0] - u, sample_point[1] - v)
 
             print('Found coordinates {} for ray which deviates {} ({} norm).'.format((u, v), error, np.linalg.norm(error)))
