@@ -4,7 +4,7 @@ from tqdm import tqdm
 import multiprocessing
 import pickle
 
-import knot_generators as kg
+import flexiblecc.BSpline.knot_generators as kg
 
 # The implementation of this B-spline-based camera model is based on the description in the 
 # article "Generalized B-spline Camera Model" by Johannes Beck and Christoph Stiller.

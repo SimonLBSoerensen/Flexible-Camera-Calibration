@@ -3,3 +3,4 @@ matplotlib
 opencv-contrib-python
 tqdm
 scipy
+Pillow
