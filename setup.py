@@ -21,7 +21,7 @@ setuptools.setup(
     keywords="camera calibration",
     python_requires='>=3.6',
     license='MIT',
-    install_requires=["numpy", "opencv-python>=3.1", "tqdm", "matplotlib", "scipy"],
+    install_requires=["numpy", "opencv-contrib-python>=3.1", "tqdm", "matplotlib", "scipy", Pillow],
 )
 
 #python setup.py sdist bdist_wheel
