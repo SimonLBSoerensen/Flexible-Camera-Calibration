@@ -7,6 +7,7 @@ import seaborn as sns
 import pandas as pd
 import itertools
 
+
 def maha_dist(x, mean, cov):
     """
     calgulates the malahonobis distance
@@ -17,6 +18,7 @@ def maha_dist(x, mean, cov):
     :return: The malahonobis distance
     """
     return np.matmul(np.matmul((np.array(x) - mean).transpose(), np.linalg.inv(cov)), (np.array(x) - mean))
+
 
 def maha_dist_arr(arr, mean, cov):
     """
@@ -119,7 +121,8 @@ def plot_seaborn_scatter_matrix(arr, kde=True, names=None):
     :param names: A list of the names of the p dimensions. If None will be named "Dimension i"
     :return: The axis for the plot
     """
-    axs = sns.pairplot(pd.DataFrame(arr, columns=["Dimension {}".format(i) for i in range(1, arr.shape[1] + 1)] if names is None else names),
+    axs = sns.pairplot(pd.DataFrame(arr, columns=["Dimension {}".format(i) for i in
+                                                  range(1, arr.shape[1] + 1)] if names is None else names),
                        diag_kind="kde" if kde else "hist", kind="reg", markers="+")
     return axs
 
@@ -156,6 +159,7 @@ def plot_matplotlib_scatter_matrix(arr, ax_info=None):
         else:
             ax.scatter(data_i, data_j)
         return ax
+
 
 def _plot_model_check_in_one_wscatter(arr, violinplot=False):
     """
@@ -224,7 +228,6 @@ def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_str
         if save_f_string:
             plt.savefig(save_f_string.format("qqplot"), **saveargs)
         plt.show()
-
 
 
 def one_sample_hotelling_t2(arr, mean_to_test):
@@ -338,4 +341,3 @@ def arr_correlation_test(arr, nonparametric, plot=False, plot_critical_value=Non
         return (res, ax)
     else:
         return (res)
-

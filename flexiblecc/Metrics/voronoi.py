@@ -2,6 +2,7 @@ from scipy.spatial import Voronoi
 import matplotlib.pyplot as plt
 import numpy as np
 from collections.abc import Iterable
+import cv2
 
 def _voronoi_finite_polygons_2d(vor, radius=None):
     """
@@ -135,6 +136,52 @@ def _color_angle(values, deg=True):
     return RGB
 
 
+def cal_angles_and_mag(image_points, obj_points, rvecs, tvecs, cameraMatrix, distCoeffs):
+    """
+    Calgulates the angels and magnitude for the projectet points in relation to the feature points
+    :param image_points: The points object points are found in the image
+    :param obj_points: The object points
+    :param rvecs (ndarray): Rotation vectors estimated for each pattern view
+    :param tvecs (ndarray): Translation vectors estimated for each pattern view
+    :param cameraMatrix: 3x3 floating-point camera matrix
+            [[fx, 0,  cx],
+             [0,  fy, cy],
+    :param distCoeffs: vector of distortion coefficients of 4, 5, 8, 12 or 14 elements
+            (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]])
+    :return img_points: The image points in a flat list
+    :return diff: The difrence for the points as a (nx2) list
+    :return angels: The angels for each of the points
+    :return mag: The L2 magnitute for each of the points
+    """
+    img_points_all = []
+    angels_all = []
+    diff_all = []
+    mag_all = []
+
+    for img_ps, obj_ps, rvec, tvec in zip(image_points, obj_points, rvecs, tvecs):
+        real_img_points = img_ps.reshape(-1, 2)
+
+        repor_img_points = cv2.projectPoints(obj_ps, rvec, tvec, cameraMatrix, distCoeffs)[0].reshape(-1, 2)
+        diff = real_img_points - repor_img_points
+
+        angels = np.array([np.angle(el[0] + el[1] * 1j, deg=True) for el in diff])
+        neg_angels = np.where(angels < 0)[0]
+        angels[neg_angels] = 360 + angels[neg_angels]
+
+        mag = np.linalg.norm(diff, axis=1)
+
+        img_points_all.append(real_img_points)
+        diff_all.append(diff)
+        angels_all.append(angels)
+        mag_all.append(mag)
+
+    diff_all = np.concatenate(diff_all).reshape(-1, 2)
+    img_points_all = np.concatenate(img_points_all).reshape(-1, 2)
+    angels_all = np.concatenate(angels_all).flatten()
+    mag_all = np.concatenate(mag_all).flatten()
+    return img_points_all, diff_all, angels_all, mag_all
+
+
 def plot_voronoi(points, points_angle, deg=True, ax=None, xy_lim=True, radius=None, plot_points=False):
     """
     Plots voronoi diagram for the given points
@@ -143,7 +190,7 @@ def plot_voronoi(points, points_angle, deg=True, ax=None, xy_lim=True, radius=No
         ax = plt.gca()
 
     if plot_points:
-        ax.plot(points[:,0], points[:,1], "o")
+        ax.plot(points[:, 0], points[:, 1], "o")
 
     vor = Voronoi(points)
     regions, vertices = _voronoi_finite_polygons_2d(vor, radius=radius)
