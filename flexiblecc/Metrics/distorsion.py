@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None):
+def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, save_f_string=None):
     """
     Plots the distorsion discrept width distCoeffs
     Arguments:
@@ -12,6 +12,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None):
         image_size (tuple): The size of the image from the camera of length 2
         step (int): Grid step size for undistorted calculations over the image
         contour_n_levels (int/array): Determines the number and positions of the contour lines / regions. If an int n, use n data intervals; i.e. draw n+1 contour lines. The level heights are automatically chosen. If array-like, draw contour lines at the specified levels. The values must be in increasing order.
+        save_f_string (str): The f string to use when saving
     """
     assert len(image_size) == 2 and isinstance(image_size, tuple), "image_size has to be a tuple of length 2"
     assert isinstance(undistort_func, Callable), "undistortFunc has to be callable"
@@ -61,7 +62,11 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None):
 
     plt.gca().invert_xaxis()
 
-    plt.show()
+    if save_f_string is not None:
+        plt.savefig(save_f_string.format("distance"))
+        plt.close()
+    else:
+        plt.show()
 
     plt.figure(figsize=(20, 10))
 
@@ -98,4 +103,8 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None):
 
     plt.gca().invert_yaxis()
 
-    plt.show()
+    if save_f_string is not None:
+        plt.savefig(save_f_string.format("angle"))
+        plt.close()
+    else:
+        plt.show()
