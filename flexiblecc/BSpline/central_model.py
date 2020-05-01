@@ -307,8 +307,6 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 
     return cm, result
 
 
-print('a')
-
 if __name__ == '__main__':
     import time
 

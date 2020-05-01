@@ -1,8 +1,11 @@
 import scipy.stats as stats
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import multivariate_normal
+from scipy.stats import multivariate_normal, pearsonr, spearmanr
 from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+import pandas as pd
+import itertools
 
 def maha_dist(x, mean, cov):
     """
@@ -87,7 +90,7 @@ def plot_qqplot(arr, ax=None):
     return ax
 
 
-def plot_box(arr, ax=None):
+def plot_box(arr, ax=None, violinplot=False):
     """
     Makes a Box plot
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
@@ -96,16 +99,34 @@ def plot_box(arr, ax=None):
     if ax is None:
         plt.figure()
         ax = plt.gca()
+    if not violinplot:
+        ax.boxplot(arr)
+        ax.set_title("Boxplots")
+        ax.set_xlabel("Boxplot for the i'th dimensional variable")
+    else:
+        ax.violinplot(arr, showmedians=True)
+        ax.set_title("Violinplot")
+        ax.set_xlabel("Violinplot for the i'th dimensional variable")
 
-    ax.boxplot(arr)
-    ax.set_title("Boxplots")
-    ax.set_xlabel("Boxplot for the i'th dimensional variable")
     return ax
 
 
-def plot_scatter_matrix(arr, ax_info=None):
+def plot_seaborn_scatter_matrix(arr, kde=True, names=None):
     """
-    Makes a Scatter matrix
+    Makes a seaborn based scatter matrix
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param kde: Rather or not to ues kernel density estimation in the diagronal plots
+    :param names: A list of the names of the p dimensions. If None will be named "Dimension i"
+    :return: The axis for the plot
+    """
+    axs = sns.pairplot(pd.DataFrame(arr, columns=["Dimension {}".format(i) for i in range(1, arr.shape[1] + 1)] if names is None else names),
+                       diag_kind="kde" if kde else "hist", kind="reg", markers="+")
+    return axs
+
+
+def plot_matplotlib_scatter_matrix(arr, ax_info=None):
+    """
+    Makes a matplotlib based scatter matrix
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
     :param ax_info: [ax, ax_pos], where ax is the axis to plot on and ax_pos is which plot to make (i vs j demisions)
     :return: The axis for the plot
@@ -136,21 +157,7 @@ def plot_scatter_matrix(arr, ax_info=None):
             ax.scatter(data_i, data_j)
         return ax
 
-
-def _plot_model_check_woscatter(arr):
-    """
-    Makes a model check plot with out a scatter matrix
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
-    :return: The axis for the plot
-    """
-    fig, axs = plt.subplots(2, 1)
-    plot_box(arr, axs[0])
-    plot_qqplot(arr, axs[1])
-    plt.tight_layout()
-    return axs
-
-
-def _plot_model_check_wscatter(arr):
+def _plot_model_check_in_one_wscatter(arr, violinplot=False):
     """
     Makes a model check plot with a scatter matrix
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
@@ -176,11 +183,11 @@ def _plot_model_check_wscatter(arr):
     for i in range(p):
         for j in range(p):
             ax = fig.add_subplot(gs[i, j])
-            ax = plot_scatter_matrix(arr, [ax, [i, j]])
+            ax = plot_matplotlib_scatter_matrix(arr, [ax, [i, j]])
             axs.append(ax)
 
     ax = fig.add_subplot(gs[box_pos[0]:box_pos[0] + box_rowspan, box_pos[1]:box_pos[1] + box_colspan])
-    ax = plot_box(arr, ax)
+    ax = plot_box(arr, ax, violinplot=violinplot)
     axs.append(ax)
 
     ax = fig.add_subplot(gs[qq_pos[0]:qq_pos[0] + qq_rowspan, qq_pos[1]:qq_pos[1] + qq_colspan])
@@ -190,18 +197,34 @@ def _plot_model_check_wscatter(arr):
     return axs
 
 
-def plot_model_check(arr, with_scatter=True):
+def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_string=None, **saveargs):
     """
     Makes a model check plot
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
-    :param  with_scatter: Indicats if a scatter matrix shoud be plottet in the model check
-    :return: The axis for the plot
+    :param names: A list of the names of the p dimensions. If None will be named "Dimension i". Only in use when in_one=False
     """
-    if with_scatter:
-        axs = _plot_model_check_wscatter(arr)
+    if in_one:
+        _plot_model_check_in_one_wscatter(arr, violinplot=violinplot)
     else:
-        axs = _plot_model_check_woscatter(arr)
-    return axs
+        plot_seaborn_scatter_matrix(arr, names=names)
+        if save_f_string:
+            plt.savefig(save_f_string.format("scatter_matrix"), **saveargs)
+        plt.show()
+
+        plt.figure()
+        ax = plt.gca()
+        plot_box(arr, ax, violinplot=violinplot)
+        if save_f_string:
+            plt.savefig(save_f_string.format("box"), **saveargs)
+        plt.show()
+
+        plt.figure()
+        ax = plt.gca()
+        plot_qqplot(arr, ax)
+        if save_f_string:
+            plt.savefig(save_f_string.format("qqplot"), **saveargs)
+        plt.show()
+
 
 
 def one_sample_hotelling_t2(arr, mean_to_test):
@@ -211,8 +234,6 @@ def one_sample_hotelling_t2(arr, mean_to_test):
     :param mean_to_test: The mean vector to test for
     :return p_value: The p_value for the test
     """
-    # TODO: anden person gennem gå enninghed i matematikken
-
     n = arr.shape[0]
     p = arr.shape[1]
 
@@ -227,10 +248,94 @@ def one_sample_hotelling_t2(arr, mean_to_test):
     return p_value
 
 
-def no_systematic_error_test(arr):
+def zero_mean_test(arr):
     """
     Tests if there is a systematic error. By makeing a one-sample hotelling T^2 test vs a mean vector with zeros
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
     :return p_value: The p_value for the test
     """
     return one_sample_hotelling_t2(arr, mean_to_test=0.0)
+
+
+def plot_p_values(p_values, critical_value=None, x_labels=None, ax=None):
+    """
+    Plots p-values with a stem plot
+    :param p_values: The p-values to plot
+    :param critical_value: If given a horizontal line is made at the critical_value
+    :param x_labels: What the p-values describes. If None 1 to len(p_values) is used
+    :return p_value: The p_value for the test
+    """
+    if ax is None:
+        plt.figure()
+        ax = plt.gca()
+
+    p_values_x = np.arange(len(p_values))
+    y_ticks = list(np.arange(0, 1.1, 0.1))
+    container_stem = ax.stem(p_values_x, p_values, use_line_collection=True, bottom=0, label="p-values")
+
+    if critical_value is not None:
+        left, right = ax.get_xlim()
+        ax.hlines(critical_value, left, right, label="Critical value: {}".format(critical_value))
+        ax.set_xlim(left, right)
+        y_ticks += [critical_value]
+
+    if x_labels is not None:
+        left, right = ax.get_xlim()
+        locs, labels = plt.xticks()
+        x_labels = [""] + list(x_labels) + [""]
+        plt.xticks(ticks=locs, labels=x_labels, rotation=45)
+        ax.set_xlim(left, right)
+
+    ax.set_ylabel("p-value")
+    ax.legend()
+    ax.set_ylim(0, 1.0)
+    ax.set_yticks(y_ticks)
+    plt.grid(True)
+    return ax
+
+
+def correlation_test(a, b, nonparametric):
+    """
+    Test for correlation. If nonparametric Spearman correlation test else Pearson correlation test
+    :param a: First data arrray (one diamation)
+    :param b: Secend data array (one diamation)
+    :param nonparametric: Reather or not a nonparametric test has to be used. If not assumption that each dataset is normally distributed is made.
+    :return p_value: The p_values
+    """
+    if nonparametric:
+        correlation_coefficient, p_value = spearmanr(a, b)  # nonparametric
+    else:
+        correlation_coefficient, p_value = pearsonr(a, b)  # parametric: normally distributed
+    return correlation_coefficient, p_value
+
+
+def arr_correlation_test(arr, nonparametric, plot=False, plot_critical_value=None, plot_ax=None):
+    """
+    Test for correlation. If nonparametric Spearman correlation test else Pearson correlation test
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
+    :param nonparametric: Reather or not a nonparametric test has to be used. If not assumption that each dataset is normally distributed is made.
+    :param plot: Wather or not to plot the p-values
+    :param critical_value: If given a horizontal line is made at the critical_value
+    :param plot_ax: The axis for the plot if None a new plot axis is made
+    :return p_value: The p_values
+    :return ax: The axis for the plot. Is only returnt if plot=True
+    """
+    p = arr.shape[1]
+
+    all_combos_idx = list(itertools.combinations(np.arange(p), 2))
+    res = {}
+
+    for a_i, b_i in all_combos_idx:
+        _, p_value = correlation_test(arr[:, a_i], arr[:, b_i], nonparametric)
+        res[(a_i, b_i)] = p_value
+
+    if plot:
+        p_values = list(res.values())
+        x_labels = list(map(str, list(res.keys())))
+        ax = plot_p_values(p_values, plot_critical_value, x_labels, ax=plot_ax)
+        ax.set_title("Correlation test")
+        ax.set_xlabel("p-value for correlation between (i'th, j'th) dimensions")
+        return (res, ax)
+    else:
+        return (res)
+

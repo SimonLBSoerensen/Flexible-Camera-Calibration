@@ -4,3 +4,5 @@ opencv-contrib-python
 tqdm
 scipy
 Pillow
+seaborn
+pandas
