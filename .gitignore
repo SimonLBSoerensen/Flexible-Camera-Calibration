@@ -134,3 +134,4 @@ dmypy.json
 
 #Testfiles
 *.pickle
+/CalImgs/ChArUco/
