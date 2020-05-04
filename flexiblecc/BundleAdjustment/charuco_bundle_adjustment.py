@@ -3,7 +3,7 @@ import cv2
 import json
 import pickle
 import datetime
-#from copy import deepcopy
+from copy import deepcopy
 from flexiblecc.BSpline.central_model import CentralModel, fit_central_model
 from flexiblecc.BundleAdjustment import initialization
 from socket import gethostname
@@ -11,19 +11,20 @@ from scipy.sparse import lil_matrix, csr_matrix
 from scipy import optimize
 from time import time
 from sys import argv
+from matplotlib import pyplot as plt
 
 class BundleAdjustment:
     def __init__(self, obj_points, rvecs, tvecs, all_charuco_corners_2D, cameraMatrix, distCoeffs):
 
         self.obj_points = obj_points
 
-        self.sampled_spline_rays = np.copy(obj_points)
+        self.sampled_spline_rays = deepcopy(obj_points)
 
         #Reshape charucoboard for later use in np.dot()
         for i, img in enumerate(self.obj_points):
             self.obj_points[i] = img.reshape((img.shape[0],) + (3,1))  
 
-        self.transformed_corners = np.copy(obj_points)
+        self.transformed_corners = deepcopy(obj_points)
 
         self.all_charuco_corners_2D = all_charuco_corners_2D
 
@@ -61,7 +62,7 @@ class BundleAdjustment:
 
         return self.transformed_corners
 
-    def calc_residuals_3D(self, ls_params, p):
+    def calc_residuals_3D(self, ls_params, p, test):
 
         n_images = self.all_charuco_corners_2D.shape[0]
         cm_shape = p['cm_shape']
@@ -150,7 +151,7 @@ class BundleAdjustment:
         ba_params = np.hstack((self.cm_init_ctrl_ptns.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
 
         print('Calculating initial residuals')
-        residuals_init = self.calc_residuals_3D(ba_params, p)
+        residuals_init = self.calc_residuals_3D(ba_params, p, None)
 
         A = None #Sparsity matrix, describes the relationship between parameters (cm_control_points, rvecs, tvecs) and residuals.
         if p['ls_sparsity']:
@@ -167,7 +168,7 @@ class BundleAdjustment:
             ftol=p['ls_ftol'],
             gtol=p['ls_gtol'],
             method=p['ls_method'],
-            args=(p))
+            args=(p, None))
 
         n_images = len(self.rvecs)
 
@@ -200,6 +201,44 @@ class BundleAdjustment:
         with open(filename.format('res', '.pickle'), 'wb') as pickle_out:
             pickle.dump(res, pickle_out)
 
+    def axisEqual3D(self, ax):
+        extents = np.array([getattr(ax, 'get_{}lim'.format(dim))() for dim in 'xyz'])
+        sz = extents[:,1] - extents[:,0]
+        centers = np.mean(extents, axis=1)
+        maxsize = max(abs(sz))
+        r = maxsize/2
+        for ctr, dim in zip(centers, 'xyz'):
+            getattr(ax, 'set_{}lim'.format(dim))(ctr - r, ctr + r)
+
+
+    def draw_boards(self, n_boards):
+        ax = plt.axes(projection='3d')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        ax.plot3D([0],[0],[0], 'rx')
+        #for i, c in enumerate(["b", "y", "g", "r", "c"]):
+        for i in n_boards:
+
+            #if i in bad_images:
+
+            #draw normals
+            vector1 = np.reshape(self.transformed_corners[i][12*5+5] - self.transformed_corners[i][12*5+6], (3,))
+            vector2 = np.reshape(self.transformed_corners[i][12*5+5] - self.transformed_corners[i][12*6+5], (3,))
+            normalvector = np.cross(vector1, vector2)
+            pa = self.transformed_corners[i][12*5+5].reshape((3,))
+            pb = pa - normalvector * 100
+            ax.plot([pa[0], pb[0]], [pa[1], pb[1]],zs=[pa[2], pb[2]])
+
+            #draw planes
+            cam1_points_3D = np.reshape(self.transformed_corners[i], (-1,3))
+            ax.scatter(cam1_points_3D[:,0], cam1_points_3D[:,1], cam1_points_3D[:,2], marker='o')
+                
+        self.axisEqual3D(ax)
+        plt.show()
+
+
 def edit_parameters(p, argv):
      for arg in argv[1:]:
         try:
@@ -219,7 +258,6 @@ def edit_parameters(p, argv):
                 print("key '{}' set to '{}' of type '{}'".format(key, p[key], type(p[key])))
         else:
             print("key '{}' is not in parameters".format(key))
-
 
 
 if __name__ == '__main__':
@@ -253,6 +291,7 @@ if __name__ == '__main__':
     start_time = time()
 
     ba = BundleAdjustment(obj_points, rvecs, tvecs, all_charuco_corners_2D, cameraMatrix, distCoeffs)
+
     res = ba.least_squares(p)
 
     duration = time() - start_time
