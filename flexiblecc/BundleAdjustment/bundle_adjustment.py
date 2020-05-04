@@ -30,8 +30,8 @@ def forward_project(n_images, rvecs, tvecs, checkerboard_points):
 
 def residuals_3d(parameters, p, n_images, points_2D, image_size, cm_shape, checkerboard_points):
     spline_grid = parameters[:np.prod(cm_shape)].reshape(cm_shape)
-    rvecs = parameters[np.prod(cm_shape):][:n_images * 3].reshape((94, 3, 1))
-    tvecs = parameters[np.prod(cm_shape) + n_images * 3:].reshape((94, 3, 1))
+    rvecs = parameters[np.prod(cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
+    tvecs = parameters[np.prod(cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
 
     b_spline_object = CentralModel(
         image_dimensions=image_size,
