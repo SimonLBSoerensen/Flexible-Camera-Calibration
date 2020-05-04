@@ -13,7 +13,7 @@ from time import time
 from sys import argv
 
 class BundleAdjustment:
-    def __init__(self, obj_points, rvecs, tvecs, all_charuco_corners_2D):
+    def __init__(self, obj_points, rvecs, tvecs, all_charuco_corners_2D, cameraMatrix, distCoeffs):
 
         self.obj_points = obj_points
 
@@ -247,13 +247,12 @@ if __name__ == '__main__':
 
     edit_parameters(p, argv)
 
-    calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, \
-        stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, \
-            all_charuco_corners_2D, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points = np.load("cali.npy", allow_pickle=True)
+    _, cameraMatrix, distCoeffs, rvecs, tvecs, _, _, _, \
+        all_charuco_corners_2D, _, _, _, obj_points = np.load("cali.npy", allow_pickle=True)
 
     start_time = time()
 
-    ba = BundleAdjustment(obj_points, rvecs, tvecs, all_charuco_corners_2D)
+    ba = BundleAdjustment(obj_points, rvecs, tvecs, all_charuco_corners_2D, cameraMatrix, distCoeffs)
     res = ba.least_squares(p)
 
     duration = time() - start_time
