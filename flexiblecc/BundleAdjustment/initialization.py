@@ -3,7 +3,7 @@ import cv2
 
 
 def grid_creation(image_shape, cameraMatrix, distCoeffs, border=0, step=400):
-    image_height, image_width = image_shape
+    image_width, image_height = image_shape
 
     x = np.arange(
         start=-border,
