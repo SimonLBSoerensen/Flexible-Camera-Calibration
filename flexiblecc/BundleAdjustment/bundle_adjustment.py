@@ -12,6 +12,7 @@ from scipy import optimize
 from time import time
 from sys import argv
 from math import ceil
+from os import makedirs
 
 class BundleAdjustment:
     def __init__(self, p, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs):
@@ -211,6 +212,8 @@ class BundleAdjustment:
 
 
     def print_to_files(self, res, parameters, folder='tests/'):
+        makedirs(folder, exist_ok=True)
+
         for key in res:
             if isinstance(res[key], csr_matrix):
                 res[key] = res[key].toarray()
