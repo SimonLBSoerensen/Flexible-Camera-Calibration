@@ -14,7 +14,7 @@ import flexiblecc.BSpline.knot_generators as kg
 # Notes of how to construct b-splines: https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/surface/bspline-construct.html
 
 class CentralModel:
-    def __init__(self, image_dimensions, grid_dimensions, control_points, order, knot_method = 'open_uniform', min_basis_value=0.001, end_divergence = 1e-10):
+    def __init__(self, image_dimensions, grid_dimensions, control_points, order, knot_method = 'open_uniform', min_basis_value=0.001, end_divergence = 1e-10, save_basis_values=False):
         """Initializes a CentralModel object. \n
 
         Keyword arguments: \n
@@ -24,7 +24,8 @@ class CentralModel:
         order: the order of the interpolation.\n
         knot_method: the method used to generate the knot vector.\n
         min_basis_value: the minimum basis value. Used for optimization.\n
-        end_divergence: a small term added to the tails of the knot vector when 'open_uniform' is used. Allows for sampling at the endpoints of the spline.
+        end_divergence: a small term added to the tails of the knot vector when 'open_uniform' is used. Allows for sampling at the endpoints of the spline.\n
+        save_basis_values: lets the model save basis calculations. This increases memory use and should mainly be used if sampling with repeated u or v coordinates.
         """
         assert knot_method in ['open_uniform', 'uniform'], 'knot method should be one of the implemented methods.'
         assert isinstance(image_dimensions, tuple) and len(image_dimensions) == 2, 'image_dimensions must be a 2-dimensional tuple.'
@@ -57,6 +58,8 @@ class CentralModel:
 
         self.min_basis_value = min_basis_value
 
+        self.save_basis_values = save_basis_values
+
     def __B__(self, i, k, t, x):
         """Used to calculate the basis function \n
 
@@ -66,7 +69,7 @@ class CentralModel:
         t: Knot vector. \n
         x: Pixel coordinate of sample.   
         """
-        if (i, k, tuple(t), x) in self.B:
+        if self.save_basis_values and (i, k, tuple(t), x) in self.B:
             return self.B[(i, k, tuple(t), x)]
 
         # Equation 2
@@ -96,7 +99,8 @@ class CentralModel:
 
         B = term1a / term1b * term1c + term2a / term2b * term2c
 
-        self.B[(i, k, tuple(t), x)] = B
+        if self.save_basis_values:
+            self.B[(i, k, tuple(t), x)] = B
 
         return B
 
@@ -230,8 +234,12 @@ class CentralModel:
         use_bounds: Sets the image dimensions as bounds for the optimizer. \n
         method: Optimization method from scipy's \'minimize\'. \n
         options: Options for the optimization. See scipu's \'minimize\'. \n
-        return_points: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
+        return_results: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
         """
+        assert isinstance(ray, np.ndarray) and ray.size == 3, '\'ray\' must be an array containing the direction of a 3d ray.'
+
+        ray = ray.reshape((3,))
+
         def fun(params, ray):
             u, v = params[0], params[1]
             s = self.sample(u, v)
@@ -366,7 +374,7 @@ if __name__ == '__main__':
 
         cm = CentralModel(dim, dim, ctrl, order)
 
-        ray = np.array([4, 2, 8])
+        ray = np.array([[4], [2], [8]])
 
         options = {'disp': True,'xtol': 1e-8, 'ftol': 1e-8}
         u, v = cm.forward_sample(ray, method='Powell', tol=1e-8, options=options)
