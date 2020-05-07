@@ -3,6 +3,7 @@ import cv2
 import json
 import pickle
 import datetime
+from tqdm import tqdm
 from copy import deepcopy
 from flexiblecc.BSpline.central_model import CentralModel, fit_central_model
 from flexiblecc.BundleAdjustment import initialization
@@ -15,7 +16,7 @@ from math import ceil
 from os import makedirs
 
 class BundleAdjustment:
-    def __init__(self, p, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs):
+    def __init__(self, p, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, control_points=None, use_control_points=False):
 
         self.obj_points = obj_points
 
@@ -32,20 +33,24 @@ class BundleAdjustment:
         self.rvecs = np.array(rvecs)
         self.tvecs = np.array(tvecs)
 
-        self.cm_init_ctrl_ptns = initialization.grid_creation(p['image_dimensions'], cameraMatrix, distCoeffs, border=p['cm_border'], step=p['cm_stepsize'])
-        self.cm_init_ctrl_ptns = np.divide(self.cm_init_ctrl_ptns, np.linalg.norm(self.cm_init_ctrl_ptns, axis=1).reshape((self.cm_init_ctrl_ptns.shape[0], 1)))
+        if use_control_points:
+            self.cm_init_ctrl_ptns = None
+            self.cm_control_points = control_points.reshape((-1,3))
+        else:
+            self.cm_init_ctrl_ptns = initialization.grid_creation(p['image_dimensions'], cameraMatrix, distCoeffs, border=p['cm_border'], step=p['cm_stepsize'])
+            self.cm_init_ctrl_ptns = np.divide(self.cm_init_ctrl_ptns, np.linalg.norm(self.cm_init_ctrl_ptns, axis=1).reshape((self.cm_init_ctrl_ptns.shape[0], 1)))
 
-        self.cm_control_points = None
-        if p['cm_fit_control_points']:
-            cm, _ = fit_central_model(self.cm_init_ctrl_ptns.reshape(p['cm_shape']),
-                                    image_dimensions=p['image_dimensions'],
-                                    grid_dimensions=p['cm_dimensions'],
-                                    order=p['cm_order'],
-                                    knot_method=p['cm_knot_method'],
-                                    min_basis_value=p['cm_min_basis_value'],
-                                    end_divergence=p['cm_end_divergence'],
-                                    verbose=p['ls_verbose'])
-            self.cm_init_ctrl_ptns = cm.a.reshape((-1, 3))
+            self.cm_control_points = None
+            if p['cm_fit_control_points']:
+                cm, _ = fit_central_model(self.cm_init_ctrl_ptns.reshape(p['cm_shape']),
+                                        image_dimensions=p['image_dimensions'],
+                                        grid_dimensions=p['cm_dimensions'],
+                                        order=p['cm_order'],
+                                        knot_method=p['cm_knot_method'],
+                                        min_basis_value=p['cm_min_basis_value'],
+                                        end_divergence=p['cm_end_divergence'],
+                                        verbose=p['ls_verbose'])
+                self.cm_init_ctrl_ptns = cm.a.reshape((-1, 3))
 
 
     def transform_board_to_cam(self):
@@ -95,18 +100,20 @@ class BundleAdjustment:
         return transformed_corners_3D - sampled_spline_rays
 
 
-    def residuals_2d(self, ls_params, p, *args):
+    def calc_residuals_2D(self, ls_params, p, *args):
 
         cm_shape = p['cm_shape']
-        image_size = p['image_size']
-        n_images = obj_points.shape[0]
+        image_size = p['image_dimensions']
+        n_images = self.obj_points.shape[0]
 
         control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
         rvecs = ls_params[np.prod(cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
         tvecs = ls_params[np.prod(cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
 
+        self.transform_board_to_cam()
+
         b_spline_object = CentralModel(
-            image_dimensions=p['image_size'],
+            image_dimensions=p['image_dimensions'],
             grid_dimensions=p['cm_dimensions'],
             control_points=control_points,
             order=p['cm_order'],
@@ -116,9 +123,9 @@ class BundleAdjustment:
             
         # Calculate backward projected rays (b_spline)
         model_points = deepcopy(self.all_corners_2D)
-        for i in range(n_images):
+        for i in tqdm(range(n_images), total=n_images):
             for j in range(self.obj_points[i].shape[0]):
-                model_points[i, j] = b_spline_object.forward_sample(self.transformed_corners_3D[i][j])
+                model_points[i][j] = b_spline_object.forward_sample(self.transformed_corners_3D[i][j,:,0])
 
         return model_points.ravel() - self.all_corners_2D.ravel()
 
@@ -172,10 +179,10 @@ class BundleAdjustment:
         if self.cm_control_points == None:
             self.cm_control_points = self.cm_init_ctrl_ptns
 
-        ba_params = np.hstack((self.cm_init_ctrl_ptns.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
+        ls_params = np.hstack((self.cm_control_points.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
 
         print('Calculating initial residuals')
-        residuals_init = self.calc_residuals_3D(ba_params, p)
+        residuals_init = self.calc_residuals_3D(ls_params, p)
 
         A = None #Sparsity matrix, describes the relationship between parameters (cm_control_points, rvecs, tvecs) and residuals.
         if p['ls_sparsity']:
@@ -185,7 +192,7 @@ class BundleAdjustment:
         print('Performing least squares optimization on the control points and position of the chessboards')
         res = optimize.least_squares(
             fun=self.calc_residuals_3D,
-            x0=ba_params,
+            x0=ls_params,
             jac_sparsity=A,
             verbose=p['ls_verbose'],
             x_scale='jac',
@@ -211,21 +218,28 @@ class BundleAdjustment:
         return res
 
 
-    def print_to_files(self, res, parameters, folder='tests/'):
-        makedirs(folder, exist_ok=True)
+    def rms(self, residuals):
+        return np.sqrt(residuals.dot(residuals)/residuals.size)
 
-        for key in res:
-            if isinstance(res[key], csr_matrix):
-                res[key] = res[key].toarray()
-            if isinstance(res[key], np.ndarray):
-                res[key] = res[key].tolist()
 
-        filename = folder + '{}_' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '{}'
-        with open(filename.format('par', '.json'), 'w') as json_out:
-            json.dump({'parameters': parameters, 'duration': duration}, json_out, ensure_ascii=False, indent=4)
+def print_to_files(res, parameters, folder='tests/'):
+    makedirs(folder, exist_ok=True)
 
-        with open(filename.format('res', '.pickle'), 'wb') as pickle_out:
-            pickle.dump(res, pickle_out)
+    for key in res:
+        if isinstance(res[key], csr_matrix):
+            res[key] = res[key].toarray()
+        if isinstance(res[key], np.ndarray):
+            res[key] = res[key].tolist()
+
+    filename = folder + '{}_' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '{}'
+    
+    print('Saving json file with filename: ', filename.format('par', '.json'))
+    with open(filename.format('par', '.json'), 'w') as json_out:
+        json.dump({'parameters': parameters}, json_out, ensure_ascii=False, indent=4)
+    
+    print('Saving pickle file with filename: ', filename.format('res', '.pickle'))
+    with open(filename.format('res', '.pickle'), 'wb') as pickle_out:
+        pickle.dump([res, p], pickle_out)
 
 
 def edit_parameters(p, argv):
@@ -250,16 +264,17 @@ def edit_parameters(p, argv):
         else:
             print("key '{}' is not in parameters".format(key))
 
+    
 
 if __name__ == '__main__':
 
     p = {
         'image_dimensions': (4032, 3024),
         'cm_dimensions': (4032, 3024),
-        'cm_stepsize': 100,
+        'cm_stepsize': 252,
         'cm_border': 0,
         'cm_shape': (),
-        'cm_order': 3,
+        'cm_order': 2,
         'cm_fit_control_points': True,
         'cm_knot_method': 'open_uniform',
         'cm_min_basis_value': 1e-4,
@@ -281,8 +296,8 @@ if __name__ == '__main__':
     edit_parameters(p, argv)
 
     error, cameraMatrix, distCoeffs, rvecs, tvecs, _, _, _, \
-        all_corners_2D, _, _, _, obj_points = np.load("cali.npy", allow_pickle=True)
-
+        all_corners_2D, _, _, _, obj_points = np.load(p['ba_initialization_file'], allow_pickle=True)
+    
     start_time = time()
 
     ba = BundleAdjustment(p, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs)
@@ -291,7 +306,8 @@ if __name__ == '__main__':
 
     duration = time() - start_time
     p['duration'] = duration
+    p['opencv_calib_error'] = error
 
-    ba.print_to_files(res, p)
+    print_to_files(res, p)
 
     pass

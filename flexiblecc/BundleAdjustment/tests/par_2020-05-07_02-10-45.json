@@ -1,0 +1,36 @@
+{
+    "parameters": {
+        "image_dimensions": [
+            4032,
+            3024
+        ],
+        "cm_dimensions": [
+            4032,
+            3024
+        ],
+        "cm_stepsize": 252,
+        "cm_border": 0,
+        "cm_shape": [
+            17,
+            13,
+            3
+        ],
+        "cm_order": 2,
+        "cm_fit_control_points": true,
+        "cm_knot_method": "open_uniform",
+        "cm_min_basis_value": 0.0001,
+        "cm_end_divergence": 1e-10,
+        "cm_threads": 1,
+        "ls_sparsity": true,
+        "ls_verbose": 2,
+        "ls_ftol": 1e-08,
+        "ls_gtol": 1e-08,
+        "ls_method": "trf",
+        "ba_initialization_file": "C:/Users/Jakob/Documents/GitHub/Flexible-Camera-Calibration/flexiblecc/BundleAdjustment/cali.npy",
+        "seed": null,
+        "os_info": "DESKTOP-9FKLRHA",
+        "not_default": [],
+        "duration": 11815.305719137192
+    },
+    "duration": 11815.305719137192
+}
