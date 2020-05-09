@@ -133,6 +133,56 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
            perViewErrors, np.array(obj_points), np.array(img_points)
 
 
+def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, verbose=0, draw=None):
+    if criteria is None:
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    else:
+        assert isinstance(criteria, tuple), "criteria has to be a tuple"
+
+    charucoCorners_all = []
+    charucoIds_all = []
+
+    markerCorners_all = []
+    markerIds_all = []
+    obj_points_all = []
+
+    itr = enumerate(gray_imgs)
+    if verbose == 1:
+        itr = tqdm(itr)
+
+    for i, img_gray in itr:
+        markerCorners, markerIds, rejectedImgPoints = cv2.aruco.detectMarkers(img_gray, dictionary)
+
+        markers_found = len(markerCorners) > 0
+
+        if markers_found:
+
+            markerCorners_all.append(markerCorners)
+            markerIds_all.append(markerIds)
+
+            retval, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(markerCorners, markerIds, img_gray,
+                                                                                     board)
+
+            charuco_corners_found = charucoCorners is not None and len(charucoCorners) > 3
+
+            if charuco_corners_found:
+                new_better_charucoCorners = cv2.cornerSubPix(img_gray, charucoCorners.copy(), win_size, zero_zone,
+                                                             criteria)
+
+                ids = charucoIds.flatten()
+                obj_points = board.chessboardCorners[ids]
+
+                charucoCorners_all.append(new_better_charucoCorners)
+                charucoIds_all.append(charucoIds)
+                obj_points_all.append(obj_points)
+                if draw is not None:
+                    img_gray_draw = img_gray.copy()
+                    cv2.aruco.drawDetectedMarkers(img_gray_draw, markerCorners, markerIds)
+                    cv2.aruco.drawDetectedCornersCharuco(img_gray_draw, new_better_charucoCorners, charucoIds)
+                    cv2.imwrite(os.path.join(draw, "{}.png".format(i)), img_gray_draw)
+    return markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all
+
+
 def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, markerLength, dictionary, win_size=(10, 10),
                      zero_zone=(-1, -1), criteria=None,
                      flags=(cv2.CALIB_RATIONAL_MODEL +
@@ -219,50 +269,15 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     if draw is not None:
         os.makedirs(draw, exist_ok=True)
 
-    charucoCorners_all = []
-    charucoIds_all = []
-
-    markerCorners_all = []
-    markerIds_all = []
-
-    obj_points_all = []
-
     board = cv2.aruco.CharucoBoard_create(squaresX, squaresY, squareLength, markerLength, dictionary)
 
-    itr = enumerate(gray_imgs)
-    if verbose == 1:
-        itr = tqdm(itr)
-
-    for i, img_gray in itr:
-        markerCorners, markerIds, rejectedImgPoints = cv2.aruco.detectMarkers(img_gray, dictionary)
-
-        markers_found = len(markerCorners) > 0
-
-        if markers_found:
-
-            markerCorners_all.append(markerCorners)
-            markerIds_all.append(markerIds)
-
-            retval, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(markerCorners, markerIds, img_gray,
-                                                                                     board)
-
-            charuco_corners_found = charucoCorners is not None and len(charucoCorners) > 3
-
-            if charuco_corners_found:
-                new_better_charucoCorners = cv2.cornerSubPix(img_gray, charucoCorners.copy(), win_size, zero_zone,
-                                                             criteria)
-
-                ids = charucoIds.flatten()
-                obj_points = board.chessboardCorners[ids]
-
-                charucoCorners_all.append(new_better_charucoCorners)
-                charucoIds_all.append(charucoIds)
-                obj_points_all.append(obj_points)
-                if draw is not None:
-                    img_gray_draw = img_gray.copy()
-                    cv2.aruco.drawDetectedMarkers(img_gray_draw, markerCorners, markerIds)
-                    cv2.aruco.drawDetectedCornersCharuco(img_gray_draw, new_better_charucoCorners, charucoIds)
-                    cv2.imwrite(os.path.join(draw, "{}.png".format(i)), img_gray_draw)
+    markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all = find_Charuco(gray_imgs,
+                                                                                                        dictionary,
+                                                                                                        board,
+                                                                                                        win_size,
+                                                                                                        zero_zone,
+                                                                                                        criteria,
+                                                                                                        verbose,draw)
 
     if verbose == 1:
         print("Doing camera calibrate")
