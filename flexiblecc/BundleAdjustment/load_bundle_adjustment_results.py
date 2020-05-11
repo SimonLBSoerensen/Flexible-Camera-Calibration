@@ -18,8 +18,6 @@ n_images = obj_points.shape[0]
 
 res.x = np.array(res.x)
 
-euclidean_residual = np.linalg.norm(res.x.reshape((-1,2)), axis=0)
-
 cm_control_points = res.x[:np.prod(p['cm_shape'])].reshape(p['cm_shape'])
 rvecs = res.x[np.prod(p['cm_shape']):][:n_images * 3].reshape((n_images, 3, 1))
 tvecs = res.x[np.prod(p['cm_shape']) + n_images * 3:].reshape((n_images, 3, 1))
