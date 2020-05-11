@@ -35,7 +35,7 @@ def maha_dist_arr(arr, mean, cov):
 def mean_cov(arr):
     """
     Calgulates the mean vector and covarian matrix
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :return mean: The mean vector
     :return cov: The covarian matrix
     """
@@ -73,7 +73,7 @@ def plot_3DMVN(mean, cov, start, end, res):
 def plot_qqplot(arr, ax=None):
     """
     Makes a QQ-Plot in relations to chi^2
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :return: The axis for the plot
     """
     p = arr.shape[1]
@@ -95,7 +95,7 @@ def plot_qqplot(arr, ax=None):
 def plot_box(arr, ax=None, violinplot=False):
     """
     Makes a Box plot
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :return: The axis for the plot
     """
     if ax is None:
@@ -116,7 +116,7 @@ def plot_box(arr, ax=None, violinplot=False):
 def plot_seaborn_scatter_matrix(arr, kde=True, names=None):
     """
     Makes a seaborn based scatter matrix
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param kde: Rather or not to ues kernel density estimation in the diagronal plots
     :param names: A list of the names of the p dimensions. If None will be named "Dimension i"
     :return: The axis for the plot
@@ -130,7 +130,7 @@ def plot_seaborn_scatter_matrix(arr, kde=True, names=None):
 def plot_matplotlib_scatter_matrix(arr, ax_info=None):
     """
     Makes a matplotlib based scatter matrix
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param ax_info: [ax, ax_pos], where ax is the axis to plot on and ax_pos is which plot to make (i vs j demisions)
     :return: The axis for the plot
     """
@@ -164,7 +164,7 @@ def plot_matplotlib_scatter_matrix(arr, ax_info=None):
 def _plot_model_check_in_one_wscatter(arr, violinplot=False):
     """
     Makes a model check plot with a scatter matrix
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :return: The axis for the plot
     """
     p = arr.shape[1]
@@ -204,7 +204,7 @@ def _plot_model_check_in_one_wscatter(arr, violinplot=False):
 def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_string=None, **saveargs):
     """
     Makes a model check plot
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param names: A list of the names of the p dimensions. If None will be named "Dimension i". Only in use when in_one=False
     """
     if in_one:
@@ -233,7 +233,7 @@ def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_str
 def one_sample_hotelling_t2(arr, mean_to_test):
     """
     Makes a one-sample hotelling T^2 test
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param mean_to_test: The mean vector to test for
     :return p_value: The p_value for the test
     """
@@ -254,7 +254,7 @@ def one_sample_hotelling_t2(arr, mean_to_test):
 def zero_mean_test(arr):
     """
     Tests if there is a systematic error. By makeing a one-sample hotelling T^2 test vs a mean vector with zeros
-    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of diamations)
+    :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :return p_value: The p_value for the test
     """
     return one_sample_hotelling_t2(arr, mean_to_test=0.0)

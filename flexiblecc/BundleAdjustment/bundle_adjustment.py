@@ -127,7 +127,9 @@ class BundleAdjustment:
             for j in range(self.obj_points[i].shape[0]):
                 model_points[i][j] = b_spline_object.forward_sample(self.transformed_corners_3D[i][j,:,0])
 
-        return model_points.ravel() - self.all_corners_2D.ravel()
+        residuals_manhattan = np.concatenate(model_points).ravel() - np.concatenate(self.all_corners_2D).ravel()
+        residuals_euclidean = np.linalg.norm(residuals_manhattan.reshape((-1,2)), axis=1)
+        return residuals_euclidean
 
     
     def get_sparsity_matrix(self, cm_shape, image_dimensions):
