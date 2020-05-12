@@ -139,6 +139,8 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
     else:
         assert isinstance(criteria, tuple), "criteria has to be a tuple"
 
+    cv2.aruco.DetectorParameters_create()
+
     charucoCorners_all = []
     charucoIds_all = []
 
