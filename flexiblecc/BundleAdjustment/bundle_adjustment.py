@@ -5,8 +5,10 @@ import pickle
 import datetime
 from tqdm import tqdm
 from copy import deepcopy
-from flexiblecc.BSpline.central_model import CentralModel, fit_central_model
-from flexiblecc.BundleAdjustment import initialization
+from ..BSpline.central_model import CentralModel, fit_central_model
+#from flexiblecc.BSpline.central_model import CentralModel, fit_central_model
+from . import initialization
+#from flexiblecc.BundleAdjustment import initialization
 from socket import gethostname
 from scipy.sparse import lil_matrix, csr_matrix
 from scipy import optimize

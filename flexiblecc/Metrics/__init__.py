@@ -1,2 +1,5 @@
 from .distorsion import plot_distort
-from . import centralmodel, distorsion, voronoi, stats
+from . import centralmodel
+from . import distorsion
+from . import voronoi
+from . import stats
