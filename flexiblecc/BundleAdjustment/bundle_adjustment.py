@@ -102,7 +102,7 @@ class BundleAdjustment:
         return transformed_corners_3D - sampled_spline_rays
 
 
-    def calc_residuals_2D(self, ls_params, p, *args):
+    def calc_residuals_2D(self, ls_params, p, return_points_2D=False):
 
         cm_shape = p['cm_shape']
         image_size = p['image_dimensions']
@@ -131,7 +131,10 @@ class BundleAdjustment:
 
         residuals_manhattan = np.concatenate(model_points).ravel() - np.concatenate(self.all_corners_2D).ravel()
         residuals_euclidean = np.linalg.norm(residuals_manhattan.reshape((-1,2)), axis=1)
-        return residuals_euclidean
+        if return_points_2D:
+            return residuals_euclidean, model_points, self.all_corners_2D
+        else:
+            return residuals_euclidean
 
     
     def get_sparsity_matrix(self, cm_shape, image_dimensions):
@@ -203,7 +206,7 @@ class BundleAdjustment:
             ftol=p['ls_ftol'],
             gtol=p['ls_gtol'],
             method=p['ls_method'],
-            args=(p, None))
+            args=(p, False))
 
         n_images = len(self.rvecs)
 
