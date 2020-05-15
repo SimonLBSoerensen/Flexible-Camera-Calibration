@@ -18,11 +18,15 @@ from os import makedirs
 
 class BundleAdjustment:
     """
-    BundleAdjustment class. This should be used after using parametric camera calibration for an initial guess.
+    BundleAdjustment class. This should be used after using parametric camera calibration for an initial guess
     """
-    def __init__(self, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, control_points=None, args=[]):
+    def __init__(self, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, image_dimensions, 
+    cm_dimensions=None, cm_stepsize=100, cm_border=0, cm_order=2, cm_fit_control_points=True, 
+    cm_knot_method='open_uniform', cm_min_basis_value=1e-4, cm_end_divergence=1e-10, cm_threads=1,
+    ls_sparsity=True, ls_verbose=2, ls_ftol=1e-8, ls_gtol=1e-8, ls_method='trf', control_points=None
+    ):
         """
-        Initializes variables and performs an early fitting of b-spline control points, unless p contains 'cm_fit_control_points=False'.
+        Initializes variables and performs an early fitting of b-spline control points, unless p contains 'cm_fit_control_points=False'
 
         :param obj_points: Vector of vectors of object points found with calibrate_camera_charuco or calibrate_camera_chessboard from calibrate.py
         :type obj_points: ndarray
@@ -37,65 +41,72 @@ class BundleAdjustment:
         :param distCoeffs: Vector of distortion coefficients of 4, 5, 8, 12 or 14 elements
             (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]])
         :type distCoeffs: ndarray
-        :param control_points: Optional control points for the CentralModel class.
+        :param image_dimensions: Dimensions of the images used (width, height)
+        :type image_dimensions: tuple
+        :param cm_dimensions: Dimensions of control points area used in CentralModel (width, height)
+        :type cm_dimensions: tuple
+        :param cm_stepsize: Distance between control points in pixels
+        :type cm_stepsize: int
+        :param cm_border: Borders for the CentralModel, changes sample area
+        :type cm_border: int
+        :param cm_order: Order of the interpolation in CentralModel
+        :type cm_order: int
+        :param cm_fit_control_points: If True performs a fit of the CentralModel to its control points during initialization
+        :type cm_fit_control_points: Boolean
+        :param cm_knot_method: Method used to generate the knot vector in CentralModel
+        :type cm_knot_method: str
+        :param cm_min_basis_value: Used for optimization
+        :type cm_min_basis_value: float
+        :param cm_end_divergence: A small term added to the tails of the knot vector in CentralModel, when knot method 'open_uniform' is used. Allows for sampling at the endpoints of the spline
+        :type cm_end_divergence: float
+        :param cm_threads: Amount of threads used for sampling the b-spline from CentralModel (Invalid at the moment, should be 1)
+        :type cm_threads: int
+        :param ls_sparsity: If True uses sparsity matrix for least squares optimization
+        :type ls_sparsity: Boolean
+        :param ls_verbose: Verbosity of scipy.least_squares
+        :type ls_verbose: int
+        :param ls_ftol: scipy.least_squares ftol
+        :type ls_ftol: float
+        :param ls_gtol: scipy.least_squares gtol
+        :type ls_gtol: float
+        :param ls_method: scipy.least_squares optimization method
+        :type ls_method: str
+        :param control_points: Optional control points for the CentralModel class
         :type control_points: ndarray
-        :param args: List of strings to set parameters, example: ['cm_stepsize=252'], default parameters are:
-            'image_dimensions': (4032, 3024),
-            'cm_dimensions': (4032, 3024),
-            'cm_stepsize': 252,
-            'cm_border': 0,
-            'cm_shape': (),
-            'cm_order': 2,
-            'cm_fit_control_points': True,
-            'cm_knot_method': 'open_uniform',
-            'cm_min_basis_value': 1e-4,
-            'cm_end_divergence': 1e-10,
-            'cm_threads': 1,
-            'ls_sparsity': True,
-            'ls_verbose': 2,
-            'ls_ftol': 1e-8,
-            'ls_gtol': 1e-8,
-            'ls_method': 'trf',
-            'os_info': gethostname(),
-            'not_default': []
-        :type args: list
         """
+        start_init = time()
 
-        self.p = {
-            'image_dimensions': (4032, 3024),
-            'cm_dimensions': (4032, 3024),
-            'cm_stepsize': 252,
-            'cm_border': 0,
-            'cm_shape': (),
-            'cm_order': 2,
-            'cm_fit_control_points': True,
-            'cm_knot_method': 'open_uniform',
-            'cm_min_basis_value': 1e-4,
-            'cm_end_divergence': 1e-10,
-            'cm_threads': 1,
-            'ls_sparsity': True,
-            'ls_verbose': 2,
-            'ls_ftol': 1e-8,
-            'ls_gtol': 1e-8,
-            'ls_method': 'trf',
-            'os_info': gethostname(),
-            'not_default': []
-        }
+        self.image_dimensions = image_dimensions
+        if cm_dimensions is None:
+            cm_dimensions = image_dimensions
+        self.cm_dimensions = cm_dimensions
+        self.cm_stepsize = cm_stepsize
+        self.cm_border = cm_border
+        self.cm_order = cm_order
+        self.cm_fit_control_points = cm_fit_control_points
+        self.cm_knot_method = cm_knot_method
+        self.cm_min_basis_value = cm_min_basis_value
+        self.cm_end_divergence = cm_end_divergence
+        self.cm_threads = cm_threads
+        self.ls_sparsity = ls_sparsity
+        self.ls_verbose = ls_verbose
+        self.ls_ftol = ls_ftol
+        self.ls_gtol = ls_gtol
+        self.ls_method = ls_method
+        self.os_info = gethostname()
 
-        self.__edit_parameters(args)
-
-        self.p['cm_shape'] = (int(ceil((self.p['cm_dimensions'][0]+self.p['cm_border']*2)/self.p['cm_stepsize'])+1), \
-            int(ceil((self.p['cm_dimensions'][1]+self.p['cm_border']*2)/self.p['cm_stepsize'])+1), 3)
+        self.cm_shape = (int(ceil((self.cm_dimensions[0]+self.cm_border*2)/self.cm_stepsize)+1), \
+            int(ceil((self.cm_dimensions[1]+self.cm_border*2)/self.cm_stepsize)+1), 3)
 
         self.obj_points = obj_points
 
-        self.sampled_spline_rays = deepcopy(obj_points)
+        self.sampled_spline_rays = deepcopy(self.obj_points)
 
         #Reshape board for later use in np.dot()
         for i, img in enumerate(self.obj_points):
             self.obj_points[i] = img.reshape((img.shape[0],) + (3,1))  
 
-        self.transformed_corners_3D = deepcopy(obj_points)
+        self.transformed_corners_3D = deepcopy(self.obj_points)
 
         self.all_corners_2D = all_corners_2D
 
@@ -106,20 +117,22 @@ class BundleAdjustment:
             self.cm_init_ctrl_ptns = None
             self.cm_control_points = control_points.reshape((-1,3))
         else:
-            self.cm_init_ctrl_ptns = initialization.grid_creation(self.p['image_dimensions'], cameraMatrix, distCoeffs, border=self.p['cm_border'], step=self.p['cm_stepsize'])
+            self.cm_init_ctrl_ptns = initialization.grid_creation(self.image_dimensions, cameraMatrix, distCoeffs, border=self.cm_border, step=self.cm_stepsize)
             self.cm_init_ctrl_ptns = np.divide(self.cm_init_ctrl_ptns, np.linalg.norm(self.cm_init_ctrl_ptns, axis=1).reshape((self.cm_init_ctrl_ptns.shape[0], 1)))
 
             self.cm_control_points = None
-            if self.p['cm_fit_control_points']:
-                cm, _ = fit_central_model(self.cm_init_ctrl_ptns.reshape(self.p['cm_shape']),
-                                        image_dimensions=self.p['image_dimensions'],
-                                        grid_dimensions=self.p['cm_dimensions'],
-                                        order=self.p['cm_order'],
-                                        knot_method=self.p['cm_knot_method'],
-                                        min_basis_value=self.p['cm_min_basis_value'],
-                                        end_divergence=self.p['cm_end_divergence'],
-                                        verbose=self.p['ls_verbose'])
+            if self.cm_fit_control_points:
+                cm, _ = fit_central_model(self.cm_init_ctrl_ptns.reshape(self.cm_shape),
+                                        image_dimensions=self.image_dimensions,
+                                        grid_dimensions=self.cm_dimensions,
+                                        order=self.cm_order,
+                                        knot_method=self.cm_knot_method,
+                                        min_basis_value=self.cm_min_basis_value,
+                                        end_divergence=self.cm_end_divergence,
+                                        verbose=self.ls_verbose)
                 self.cm_init_ctrl_ptns = cm.a.reshape((-1, 3))
+
+        self.duration_init = time() - start_init
 
 
     def transform_board_to_cam(self):
@@ -146,36 +159,36 @@ class BundleAdjustment:
 
     def calc_residuals_3D(self, ls_params, return_points_3D=False):
         """
-        Returns 3D residuals, this is used for least_squares optimization.
+        Returns 3D residuals, this is used for least_squares optimization
 
-        :param ls_params: All parameters changed by least squares, flattened array of control points, rvecs and tvecs.
+        :param ls_params: All parameters changed by least squares, flattened array of control points, rvecs and tvecs
         :type ls_params: ndarray
         :param return_points_3D: Set to true to return residuals, sampled_spline_rays and transformed_corners_3D
         :type return_points_3D: Boolean
 
         :return residuals: Vector of all residuals
         :rtype residuals: ndarray
-        :return sampled_spline_rays: Optional: Vector of vectors of sampled points using the CentralModel class.
+        :return sampled_spline_rays: Optional: Vector of vectors of sampled points using the CentralModel class
         :rtype sampled_spline_rays: ndarray
         :return transformed_corners_3D: Optional: Vector of vectors of board points in the camera's frame
         :rtype transformed_corners_3D: ndarray
         """
 
         n_images = self.all_corners_2D.shape[0]
-        cm_shape = self.p['cm_shape']
+        cm_shape = self.cm_shape
 
         self.cm_control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
         self.rvecs = ls_params[np.prod(cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
         self.tvecs = ls_params[np.prod(cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
 
-        b_spline_object = CentralModel(
-            image_dimensions=self.p['image_dimensions'],
-            grid_dimensions=self.p['cm_dimensions'],
+        cm = CentralModel(
+            image_dimensions=self.image_dimensions,
+            grid_dimensions=self.cm_dimensions,
             control_points=self.cm_control_points,
-            order=self.p['cm_order'],
-            knot_method=self.p['cm_knot_method'],
-            min_basis_value=self.p['cm_min_basis_value'],
-            end_divergence=self.p['cm_end_divergence'])
+            order=self.cm_order,
+            knot_method=self.cm_knot_method,
+            min_basis_value=self.cm_min_basis_value,
+            end_divergence=self.cm_end_divergence)
 
         # Transform chessboard corners to camera frame
         transformed_corners_3D = np.concatenate(self.transform_board_to_cam())
@@ -183,7 +196,7 @@ class BundleAdjustment:
         # Calculate backward projected rays (b_spline)
         for i, image_corners_2D in enumerate(self.all_corners_2D):
             for j, corner_2D in enumerate(image_corners_2D):
-                self.sampled_spline_rays[i][j] = b_spline_object.sample(corner_2D[0, 0], corner_2D[0, 1])
+                self.sampled_spline_rays[i][j] = cm.sample(corner_2D[0, 0], corner_2D[0, 1])
 
         sampled_spline_rays = np.concatenate(self.sampled_spline_rays)
         if return_points_3D:
@@ -194,23 +207,23 @@ class BundleAdjustment:
 
     def calc_residuals_2D(self, ls_params, return_points_2D=False):
         """
-        Returns 2D residuals, used to compare with parametric camera calibration.
+        Returns 2D residuals, used to compare with parametric camera calibration
 
-        :param ls_params: All parameters changed by least squares, flattened array of control points, rvecs and tvecs.
+        :param ls_params: All parameters changed by least squares, flattened array of control points, rvecs and tvecs
         :type ls_params: ndarray
         :param return_points_2D: Set to true to return residuals, estimated_corners_2D and corners_2D
         :type return_points_2D: Boolean
 
         :return residuals: Vector of all residuals
         :rtype residuals: ndarray
-        :return estimated_corners_2D: Optional: Vector of vectors of estimated corners in 2D.
+        :return estimated_corners_2D: Optional: Vector of vectors of estimated corners in 2D
         :rtype estimated_corners_2D: ndarray
-        :return corners_2D: Optional: Vector of vectors of correct corners in 2D.
+        :return corners_2D: Optional: Vector of vectors of correct corners in 2D
         :rtype corners_2D: ndarray
         """
 
-        cm_shape = self.p['cm_shape']
-        image_size = self.p['image_dimensions']
+        cm_shape = self.cm_shape
+        image_size = self.image_dimensions
         n_images = self.obj_points.shape[0]
 
         self.cm_control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
@@ -219,20 +232,20 @@ class BundleAdjustment:
 
         self.transform_board_to_cam()
 
-        b_spline_object = CentralModel(
-            image_dimensions=self.p['image_dimensions'],
-            grid_dimensions=self.p['cm_dimensions'],
+        cm = CentralModel(
+            image_dimensions=self.image_dimensions,
+            grid_dimensions=self.cm_dimensions,
             control_points=self.cm_control_points,
-            order=self.p['cm_order'],
-            knot_method=self.p['cm_knot_method'],
-            min_basis_value=self.p['cm_min_basis_value'],
-            end_divergence=self.p['cm_end_divergence'])
+            order=self.cm_order,
+            knot_method=self.cm_knot_method,
+            min_basis_value=self.cm_min_basis_value,
+            end_divergence=self.cm_end_divergence)
             
         # Calculate backward projected rays (b_spline)
         model_points = deepcopy(self.all_corners_2D)
         for i in tqdm(range(n_images), total=n_images):
             for j in range(self.obj_points[i].shape[0]):
-                model_points[i][j] = b_spline_object.forward_sample(self.transformed_corners_3D[i][j,:,0])
+                model_points[i][j] = cm.forward_sample(self.transformed_corners_3D[i][j,:,0])
 
         residuals_manhattan = np.concatenate(model_points).ravel() - np.concatenate(self.all_corners_2D).ravel()
         residuals_euclidean = np.linalg.norm(residuals_manhattan.reshape((-1,2)), axis=1)
@@ -244,7 +257,7 @@ class BundleAdjustment:
     
     def get_sparsity_matrix(self, cm_shape, image_dimensions):
         """
-        Returns sparsity matrix, used to speed up least squares optimization.
+        Returns sparsity matrix, used to speed up least squares optimization
 
         :param cm_shape: Shape of control points for CentralModel
         :type ls_params: tuple
@@ -255,22 +268,22 @@ class BundleAdjustment:
         :rtype A: List of Lists
         """
         m = 0 # total number of residuals
-        for j in range(obj_points.shape[0]):
+        for j in range(self.obj_points.shape[0]):
             m += np.prod(self.obj_points[j].shape)
         
         n_spline_params = np.prod(cm_shape)  # number of b-spline parameters
-        n_rvecs_params = obj_points.shape[0] * 3  # number of rotation vector parameters
-        n_tvecs_params = obj_points.shape[0] * 3  # number of translation vector parameters
+        n_rvecs_params = self.obj_points.shape[0] * 3  # number of rotation vector parameters
+        n_tvecs_params = self.obj_points.shape[0] * 3  # number of translation vector parameters
         n = n_spline_params + n_rvecs_params + n_tvecs_params  # total number of parameters
         A = lil_matrix((m, n), dtype=int)  # sparse matrix describing the connection between parameters and residuals
 
         # Fill out sparsity matrix for the b-spline (central model) parameters.
         spline_grid = np.ndarray((cm_shape))
-        b_spline_object = CentralModel(image_dimensions, image_dimensions, spline_grid, 2)
+        cm = CentralModel(image_dimensions, image_dimensions, spline_grid, 2)
 
         all_corners_2D = np.concatenate(self.all_corners_2D).reshape((-1, 2))
         for i in range(len(all_corners_2D)):
-            control_points = b_spline_object.active_control_points(all_corners_2D[i, 0], all_corners_2D[i, 1])
+            control_points = cm.active_control_points(all_corners_2D[i, 0], all_corners_2D[i, 1])
             control_points = control_points.reshape((-1, 2))
 
             temp = np.zeros(cm_shape)
@@ -300,55 +313,68 @@ class BundleAdjustment:
 
     def least_squares(self, print_to_files=False): 
         """
-        Performs least squares optimization and returns a scipy.optimize.OptimizeResult object.
+        Performs least squares optimization and returns a scipy.optimize.OptimizeResult object
 
-        :return res: scipy.optimize.OptimizeResult object
+        :param print_to_files: If True then the results and parameters are printed to a .pickle file and parameters to a .json file
+        :type print_to_files: Boolean
+
+        :return CentralModel: BSpline.central_model.CentralModel object after optimization
+        :rtype CentralModel: BSpline.central_model.CentralModel
+        :return res: scipy.optimize.OptimizeResult object after optimization
         :rtype res: scipy.optimize.OptimizeResult
-
+        :return rvecs: Rotation vectors estimated for each pattern view
+        :rtype rvecs: ndarray
+        :return tvecs: Translation vectors estimated for each pattern view
+        :rtype tvecs: ndarray
         """
+        start_fitting = time()
+
         if self.cm_control_points == None:
             self.cm_control_points = self.cm_init_ctrl_ptns
 
         ls_params = np.hstack((self.cm_control_points.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
 
-        print('Calculating initial residuals')
-        residuals_init = self.calc_residuals_3D(ls_params)
-
         A = None #Sparsity matrix, describes the relationship between parameters (cm_control_points, rvecs, tvecs) and residuals.
-        if self.p['ls_sparsity']:
+        if self.ls_sparsity:
             print('Generating sparsity matrix')
-            A = self.get_sparsity_matrix(cm_shape=self.p['cm_shape'], image_dimensions=self.p['image_dimensions'])
-        
+            A = self.get_sparsity_matrix(cm_shape=self.cm_shape, image_dimensions=self.image_dimensions)
+
         print('Performing least squares optimization on the control points and position of the chessboards')
+
         res = optimize.least_squares(
             fun=self.calc_residuals_3D,
             x0=ls_params,
             jac_sparsity=A,
-            verbose=self.p['ls_verbose'],
+            verbose=self.ls_verbose,
             x_scale='jac',
-            ftol=self.p['ls_ftol'],
-            gtol=self.p['ls_gtol'],
-            method=self.p['ls_method']
+            ftol=self.ls_ftol,
+            gtol=self.ls_gtol,
+            method=self.ls_method
             )
+        
+        duration_fitting = time() - start_fitting
 
         n_images = len(self.rvecs)
 
-        self.cm_control_points = res.x[:np.prod(self.p['cm_shape'])].reshape(self.p['cm_shape'])
-        self.rvecs = res.x[np.prod(self.p['cm_shape']):][:n_images * 3].reshape((n_images, 3, 1))
-        self.tvecs = res.x[np.prod(self.p['cm_shape']) + n_images * 3:].reshape((n_images, 3, 1))
-        res['initial_residuals'] = residuals_init
-        res['initial_control_points'] = self.cm_init_ctrl_ptns
-        res['cm_control_points'] = self.cm_control_points
-        res['rvecs'] = self.rvecs
-        res['tvecs'] = self.tvecs
+        self.cm_control_points = res.x[:np.prod(self.cm_shape)].reshape(self.cm_shape)
+        self.rvecs = res.x[np.prod(self.cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
+        self.tvecs = res.x[np.prod(self.cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
 
-        self.p = p
         self.res = res
 
         if print_to_files:
-            self._print_to_files(res)
+            self._print_to_files(res, duration_fitting)
 
-        return res
+        cm = CentralModel(
+            image_dimensions=self.image_dimensions,
+            grid_dimensions=self.cm_dimensions,
+            control_points=self.cm_control_points,
+            order=self.cm_order,
+            knot_method=self.cm_knot_method,
+            min_basis_value=self.cm_min_basis_value,
+            end_divergence=self.cm_end_divergence)
+
+        return cm, res, self.rvecs, self.tvecs
 
 
     def rms(self, residuals):
@@ -365,41 +391,14 @@ class BundleAdjustment:
         return np.sqrt(residuals.dot(residuals)/residuals.size)
 
 
-    def __edit_parameters(self, args):
-        """
-        Changes parameters according to elements in args
-
-        :param args: List of strings of changes to parameters
-        :type args: list
-        """
-        if len(args) == 0:
-            print('Running with default parameters')
-        for arg in args:
-            try:
-                key, value = arg.split('=')
-            except:
-                print("Argument '{}' is invalid and therefore ignored".format(arg))
-                continue
-            if key in p:
-                try:
-                    if self.p[key] != eval(value):
-                        self.p['not_default'].append(key)
-
-                    self.p[key] = eval(value)
-                    print("key '{}' set to '{}' of type '{}'".format(key, self.p[key], type(self.p[key])))
-                except:
-                    self.p[key] = value
-                    print("key '{}' set to '{}' of type '{}'".format(key, self.p[key], type(self.p[key])))
-            else:
-                print("key '{}' is not in parameters".format(key))
-
-
-    def _print_to_files(self, res, folder='tests/'):
+    def _print_to_files(self, res, duration_fitting, folder='tests/'):
         """
         Prints results and parameters to files in the folder specified in the arguments.
 
         :param res: scipy.optimize.OptimizeResult object from least_squares
         :type res: scipy.optimize.OptimizeResult
+        :param duration_fitting: Time used for least squares optimization
+        :type duration_fitting: float
         :param folder: Path to dump results and paramters to
         :type folder: str
         """
@@ -413,28 +412,49 @@ class BundleAdjustment:
 
         filename = folder + '{}_' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '{}'
         
+        p = {
+            'image_dimensions': self.image_dimensions,
+            'cm_dimensions': self.cm_dimensions,
+            'cm_stepsize': self.cm_stepsize,
+            'cm_border': self.cm_border,
+            'cm_shape': self.cm_shape,
+            'cm_order': self.cm_order,
+            'cm_fit_control_points': self.cm_fit_control_points,
+            'cm_knot_method': self.cm_knot_method,
+            'cm_min_basis_value': self.cm_min_basis_value,
+            'cm_end_divergence': self.cm_end_divergence,
+            'cm_threads': self.cm_threads,
+            'ls_sparsity': self.ls_sparsity,
+            'ls_verbose': self.ls_verbose,
+            'ls_ftol': self.ls_ftol,
+            'ls_gtol': self.ls_gtol,
+            'ls_method': self.ls_method,
+            'os_info': self.os_info,
+            'duration_init': self.duration_init,
+            'duration_fitting': duration_fitting
+        }
+
         print('Saving json file with filename: ', filename.format('par', '.json'))
         with open(filename.format('par', '.json'), 'w') as json_out:
-            json.dump({'parameters': self.p}, json_out, ensure_ascii=False, indent=4)
+            json.dump({'parameters': p}, json_out, ensure_ascii=False, indent=4)
         
         print('Saving pickle file with filename: ', filename.format('res', '.pickle'))
         with open(filename.format('res', '.pickle'), 'wb') as pickle_out:
-            pickle.dump([res, self.p], pickle_out)
+            pickle.dump([res, p], pickle_out)
     
 
 if __name__ == '__main__':
 
     error, cameraMatrix, distCoeffs, rvecs, tvecs, _, _, _, \
-        all_corners_2D, _, _, _, obj_points = np.load('cali.npy', allow_pickle=True)
+        all_corners_2D, _, _, _, obj_points_test = np.load('cali.npy', allow_pickle=True)
     
     start_time = time()
 
-    ba = BundleAdjustment(obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs)
+    ba = BundleAdjustment(obj_points_test, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, image_dimensions=(4032,3024),
+    cm_dimensions=None, cm_stepsize=2000, cm_border=0, cm_order=2, cm_fit_control_points=True, 
+    cm_knot_method='open_uniform', cm_min_basis_value=1e-4, cm_end_divergence=1e-10, cm_threads=1,
+    ls_sparsity=True, ls_verbose=2, ls_ftol=1, ls_gtol=1, ls_method='trf', control_points=None)
 
-    res = ba.least_squares()
-
-    duration = time() - start_time
-    p['duration'] = duration
-    p['opencv_calib_error'] = error
+    cm, res, rvecs, tvecs = ba.least_squares(True)
 
     pass
