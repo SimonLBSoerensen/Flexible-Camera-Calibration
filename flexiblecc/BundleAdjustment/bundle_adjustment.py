@@ -321,12 +321,12 @@ class BundleAdjustment:
         return A
 
 
-    def least_squares(self, print_to_files=False): 
+    def least_squares(self, folder=None): 
         """
         Performs least squares optimization and returns a scipy.optimize.OptimizeResult object
 
-        :param print_to_files: If True then the results and parameters are printed to a .pickle file and parameters to a .json file
-        :type print_to_files: Boolean
+        :param folder: If folder is specified, the results and parameters are printed to a .pickle file and parameters to a .json file in that folder
+        :type folder: str
 
         :return CentralModel: BSpline.central_model.CentralModel object after optimization
         :rtype CentralModel: BSpline.central_model.CentralModel
@@ -372,8 +372,8 @@ class BundleAdjustment:
 
         self.res = res
 
-        if print_to_files:
-            self._print_to_files(res, duration_fitting)
+        if folder is not None:
+            self._print_to_files(res, duration_fitting, folder=folder)
 
         cm = CentralModel(
             image_dimensions=self.image_dimensions,
