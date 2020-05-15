@@ -14,7 +14,7 @@ from scipy.sparse import lil_matrix, csr_matrix
 from scipy import optimize
 from time import time
 from math import ceil
-from os import makedirs
+from os import makedirs, path
 
 class BundleAdjustment:
     """
@@ -325,7 +325,8 @@ class BundleAdjustment:
         """
         Performs least squares optimization and returns a scipy.optimize.OptimizeResult object
 
-        :param folder: If folder is specified, the results and parameters are printed to a .pickle file and parameters to a .json file in that folder
+        :param folder: If folder is specified, the results and parameters are printed to a .pickle file and parameters to a .json file in that folder. 
+        The files will be named res_<timestamp>.pickle and par_<timestamp>.json
         :type folder: str
 
         :return CentralModel: BSpline.central_model.CentralModel object after optimization
@@ -420,7 +421,7 @@ class BundleAdjustment:
             if isinstance(res[key], np.ndarray):
                 res[key] = res[key].tolist()
 
-        filename = folder + '{}_' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '{}'
+        filename = path.join(folder, '{}_' + datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '{}')
         
         p = {
             'image_dimensions': self.image_dimensions,
