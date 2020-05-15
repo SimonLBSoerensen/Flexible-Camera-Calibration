@@ -39,7 +39,7 @@ for order in range(1, 4):
         pts = np.ndarray((image_dimensions[0], 2))
         for u in range(image_dimensions[0]):
             pts[u][0] = u/image_dimensions[0]
-            pts[u][1] = cm.__B__(i, order, cm.th, u/image_dimensions[0])
+            pts[u][1] = cm._B(i, order, cm.th, u/image_dimensions[0])
         
         pts_i.append(pts[:,1])
 

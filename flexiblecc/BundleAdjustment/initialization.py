@@ -11,11 +11,21 @@ def grid_creation(image_shape, cameraMatrix, distCoeffs, border=0, step=400):
         step=step,
         dtype=float)
 
+    cx = np.mean(x)
+    cw = image_width/2
+
+    x += cw - cx
+
     y = np.arange(
         start=-border,
         stop=image_height + border + step,
         step=step,
         dtype=float)
+
+    cy = np.mean(y)
+    ch = image_height/2
+
+    y += ch - cy
 
     src = np.transpose(np.meshgrid(x, y)).reshape((-1, 2))
 

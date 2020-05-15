@@ -27,7 +27,7 @@ class CentralModel:
         end_divergence: a small term added to the tails of the knot vector when 'open_uniform' is used. Allows for sampling at the endpoints of the spline.\n
         save_basis_values: lets the model save basis calculations. This increases memory use and should mainly be used if sampling with repeated u or v coordinates.
         """
-        assert knot_method in ['open_uniform', 'uniform'], 'knot method should be one of the implemented methods.'
+        assert knot_method in ['open_uniform', 'uniform', 'none'], 'knot method should be one of the implemented methods.'
         assert isinstance(image_dimensions, tuple) and len(image_dimensions) == 2, 'image_dimensions must be a 2-dimensional tuple.'
         assert isinstance(grid_dimensions, tuple) and len(grid_dimensions) == 2, 'grid_dimensions must be a 2-dimensional tuple.'
         assert isinstance(control_points, np.ndarray) and len(control_points.shape) == 3 and control_points.shape[-1] == 3, 'grid must be a 3-dimensional numpy array with a depth of 3.'
@@ -56,11 +56,15 @@ class CentralModel:
             self.th = kg.uniform(self.n, order)
             self.tv = kg.uniform(self.m, order)
 
+        if knot_method == 'none':
+            self.th = np.array([])
+            self.tv = np.array([])
+
         self.min_basis_value = min_basis_value
 
         self.save_basis_values = save_basis_values
 
-    def __B__(self, i, k, t, x):
+    def _B(self, i, k, t, x):
         """Used to calculate the basis function \n
 
         Keyword arguments: \n
@@ -82,7 +86,7 @@ class CentralModel:
         # Equation 3
         term1a = x - t[i]
         term1b = t[i + k] - t[i]
-        term1c = self.__B__(i, k - 1, t, x)
+        term1c = self._B(i, k - 1, t, x)
 
         # If term1b is zero, the division will be undefined.
         # 'Solution' suggested in https://en.wikipedia.org/wiki/Talk%3AB-spline#Avoiding_division_by_zero
@@ -91,7 +95,7 @@ class CentralModel:
 
         term2a = t[i + k + 1] - x
         term2b = t[i + k + 1] - t[i + 1]
-        term2c = self.__B__(i + 1, k - 1, t, x)
+        term2c = self._B(i + 1, k - 1, t, x)
 
         # If term2b is zero, the division will be undefined.
         if term2b == 0:
@@ -129,8 +133,8 @@ class CentralModel:
         u = self._normalize(u, self.grid_width, self.image_width)
         v = self._normalize(v, self.grid_height, self.image_height)
 
-        Bh = np.array([self.__B__(i, self.order, self.th, u) for i in range(self.n)])
-        Bv = np.array([self.__B__(j, self.order, self.tv, v) for j in range(self.m)])
+        Bh = np.array([self._B(i, self.order, self.th, u) for i in range(self.n)])
+        Bv = np.array([self._B(j, self.order, self.tv, v) for j in range(self.m)])
 
         # Optimization
         vi = np.where(Bh >= self.min_basis_value)[0]
@@ -158,7 +162,8 @@ class CentralModel:
 
         return samples
 
-    def _task(self, i, pts, output): output.put(np.array([np.hstack([pt[0], self.sample(pt[1], pt[2])]) for pt in pts]))
+    def _task(self, i, pts, output): 
+        output.put(np.array([np.hstack([pt[0], self.sample(pt[1], pt[2])]) for pt in pts]))
 
     def _sample_many(self, pts, threads=1):
         """(DON'T USE THIS METHOD) 
@@ -234,7 +239,7 @@ class CentralModel:
         use_bounds: Sets the image dimensions as bounds for the optimizer. \n
         method: Optimization method from scipy's \'minimize\'. \n
         options: Options for the optimization. See scipu's \'minimize\'. \n
-        return_results: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
+        return_resultsc: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
         """
         assert isinstance(ray, np.ndarray) and ray.size == 3, '\'ray\' must be an array containing the direction of a 3d ray.'
 
@@ -314,6 +319,18 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 
 
     return cm, result
 
+def cm_load(fp):
+    image_width, image_height, grid_width, grid_height, a, order, B, th, tv, min_basis_value, save_basis_values = np.load(fp, allow_pickle=True).values()
+    cm = CentralModel((image_width, image_height), (grid_width, grid_height), a, order, 'none', min_basis_value, 0, save_basis_values)
+    cm.th = th
+    cm.tv = tv
+    cm.B = B
+
+    return cm
+
+def cm_save(cm, fp):
+    np.savez(fp, cm.image_width, cm.image_height, cm.grid_width, cm.grid_height, cm.a, cm.order, cm.B, cm.th, cm.tv, cm.min_basis_value, cm.save_basis_values)
+
 
 if __name__ == '__main__':
     import time
@@ -330,14 +347,14 @@ if __name__ == '__main__':
 
         start = time.time()
         cm = CentralModel(shape, shape, np.random.normal(0, 1, (6,6,3)), 4)
-        _ = cm.sample_many(pts, 16)
+        _ = cm._sample_many(pts, 16)
         end = time.time()
 
         print('Threaded version used {:.2f} s. ({} iter/s)'.format(end - start, int(len(pts) / (end - start))))
 
         start = time.time()
         cm = CentralModel(shape, shape, np.random.normal(0, 1, (6,6,3)), 4)
-        _ = cm.sample_many(pts, 1)
+        _ = cm._sample_many(pts, 1)
         end = time.time()
 
         print('Non-threaded version used {:.2f} s. ({} iter/s)'.format(end - start, int(len(pts) / (end - start))))
@@ -359,7 +376,7 @@ if __name__ == '__main__':
             pts.append(cm.active_control_points(i * (dim[0] / (n-1)), 100))
 
     ## Forward sampling test
-    if True:
+    if False:
         dim = (200, 200)
         grid = (5,5,3)
         order = 3
@@ -381,6 +398,40 @@ if __name__ == '__main__':
 
         s = cm.sample(u, v)
 
+        print(ray, s, ray-s)
+
+
+    ## Save/Load Test
+    if True:
+        dim = (200, 200)
+        grid = (5,5,3)
+        order = 3
+        
+        ctrl = np.full(grid, 0)
+
+        for i, row in enumerate(ctrl):
+            for j, cell in enumerate(row):
+                ctrl[i, j, 0] = i
+                ctrl[i, j, 1] = j
+                ctrl[i, j, 2] = i * j
+
+        cm = CentralModel(dim, dim, ctrl, order)
+
+        with open('temp_file.npz', 'wb') as file:
+            cm_save(cm, file)
+
+        cm = None
+
+        with open('temp_file.npz', 'rb') as file:
+            cm = cm_load(file)
+
+        ray = np.array([[4], [2], [8]])
+
+        options = {'disp': True,'xtol': 1e-8, 'ftol': 1e-8}
+        u, v = cm.forward_sample(ray, method='Powell', tol=1e-8, options=options)
+
+        s = cm.sample(u, v)
+        
         print(ray, s, ray-s)
 
     ## Real world forward sampling test
