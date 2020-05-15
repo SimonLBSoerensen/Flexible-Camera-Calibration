@@ -211,7 +211,7 @@ class BundleAdjustment:
             return transformed_corners_3D.ravel() - sampled_spline_rays.ravel()
 
 
-    def calc_residuals_2D(self, ls_params, return_points_2D=False):
+    def calc_residuals_2D(self, ls_params, return_points_2D=False, verbose=0):
         """
         Returns 2D residuals, used to compare with parametric camera calibration
 
@@ -249,7 +249,11 @@ class BundleAdjustment:
             
         # Calculate backward projected rays (b_spline)
         model_points = deepcopy(self.all_corners_2D)
-        for i in tqdm(range(n_images), total=n_images):
+        if verbose == 1:
+            iter = tqdm(range(n_images), total=n_images, unit='image')
+        else:
+            iter = range(n_images)
+        for i in iter:
             for j in range(self.obj_points[i].shape[0]):
                 model_points[i][j] = cm.forward_sample(self.transformed_corners_3D[i][j,:,0])
 
