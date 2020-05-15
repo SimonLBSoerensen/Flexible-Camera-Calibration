@@ -28,9 +28,9 @@ ls_params = np.hstack((cm_control_points.ravel(), rvecs.ravel(), tvecs.ravel()))
 
 #residuals_3D = ba.calc_residuals_3D(ls_params, p)
 
-residuals_2D = ba.calc_residuals_2D(ls_params, p)
+residuals_2D, estimated_points_2D, correct_points_2D = ba.calc_residuals_2D(ls_params, p, return_points_2D=True)
 
-np.save('residuals_2D_2020-05-09_22-32-50', residuals_2D)
+np.save('residuals_and_points_2D_2020-05-09_22-32-50', [residuals_2D, estimated_points_2D, correct_points_2D])
 
 #with open('residuals_2D_2020-05-09_22-32-50.json', 'w') as json_out:
 #    json.dump(residuals_2D.tolist(), json_out, ensure_ascii=False, indent=4)
