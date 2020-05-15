@@ -50,7 +50,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
 
     plt.subplot(1, 2, 2)
     plt.title("Euclidean distance in pixels between distorted and undistorted contour")
-    CS = plt.contour(X, Y, errors_grid, levels=contour_n_levels)
+    CS = plt.contour(Y, X, errors_grid, levels=contour_n_levels)
     plt.clabel(CS, inline=1, fontsize=10)
 
     plt.xticks([], [])
@@ -60,7 +60,8 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
     asp /= np.abs(np.diff(im.axes.get_xlim())[0] / np.diff(im.axes.get_ylim())[0])
     CS.ax.set_aspect(asp)
 
-    plt.gca().invert_xaxis()
+    #plt.gca().invert_xaxis()
+    plt.gca().invert_yaxis()
 
     if save_f_string is not None:
         plt.savefig(save_f_string.format("distance"))
