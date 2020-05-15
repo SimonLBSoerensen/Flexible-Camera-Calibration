@@ -102,9 +102,14 @@ class BundleAdjustment:
 
         self.sampled_spline_rays = deepcopy(self.obj_points)
 
+        if len(self.sampled_spline_rays[0].shape) == 3:
+            for i, img in enumerate(self.obj_points):
+                self.sampled_spline_rays[i] = img.reshape((img.shape[0],) + (3,))  
+
         #Reshape board for later use in np.dot()
-        for i, img in enumerate(self.obj_points):
-            self.obj_points[i] = img.reshape((img.shape[0],) + (3,1))  
+        if len(self.obj_points[0].shape) == 2:
+            for i, img in enumerate(self.obj_points):
+                self.obj_points[i] = img.reshape((img.shape[0],) + (3,1))  
 
         self.transformed_corners_3D = deepcopy(self.obj_points)
 
@@ -196,7 +201,8 @@ class BundleAdjustment:
         # Calculate backward projected rays (b_spline)
         for i, image_corners_2D in enumerate(self.all_corners_2D):
             for j, corner_2D in enumerate(image_corners_2D):
-                self.sampled_spline_rays[i][j] = cm.sample(corner_2D[0, 0], corner_2D[0, 1])
+                sample = cm.sample(corner_2D[0, 0], corner_2D[0, 1])
+                self.sampled_spline_rays[i][j] = sample#cm.sample(corner_2D[0, 0], corner_2D[0, 1])
 
         sampled_spline_rays = np.concatenate(self.sampled_spline_rays)
         if return_points_3D:
@@ -451,7 +457,7 @@ if __name__ == '__main__':
     start_time = time()
 
     ba = BundleAdjustment(obj_points_test, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, image_dimensions=(4032,3024),
-    cm_dimensions=None, cm_stepsize=2000, cm_border=0, cm_order=2, cm_fit_control_points=True, 
+    cm_dimensions=None, cm_stepsize=1000, cm_border=0, cm_order=2, cm_fit_control_points=True, 
     cm_knot_method='open_uniform', cm_min_basis_value=1e-4, cm_end_divergence=1e-10, cm_threads=1,
     ls_sparsity=True, ls_verbose=2, ls_ftol=1, ls_gtol=1, ls_method='trf', control_points=None)
 
