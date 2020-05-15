@@ -260,7 +260,7 @@ class BundleAdjustment:
         residuals_manhattan = np.concatenate(model_points).ravel() - np.concatenate(self.all_corners_2D).ravel()
         residuals_euclidean = np.linalg.norm(residuals_manhattan.reshape((-1,2)), axis=1)
         if return_points_2D:
-            return rms(residuals_euclidean), residuals_euclidean, model_points, self.all_corners_2D
+            return self.rms(residuals_euclidean), residuals_euclidean, model_points, self.all_corners_2D
         else:
             return residuals_euclidean
 
