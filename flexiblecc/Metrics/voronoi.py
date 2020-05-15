@@ -136,9 +136,45 @@ def _color_angle(values, deg=True):
     return RGB
 
 
-def cal_angles_and_mag(image_points, obj_points, rvecs, tvecs, cameraMatrix, distCoeffs):
+def cal_angles_and_mag(image_points, project_points):
     """
     Calgulates the angels and magnitude for the projectet points in relation to the feature points
+    :param image_points: The points object points are found in the image
+    :param project_points: The re-project points from object points
+    :return diff: The difrence for the points as a (nx2) list
+    :return angels: The angels for each of the points
+    :return mag: The L2 magnitute for each of the points
+    """
+    img_points_all = []
+    angels_all = []
+    diff_all = []
+    mag_all = []
+
+    for img_ps, rp_ps in zip(image_points, project_points):
+        diff = img_ps - rp_ps
+
+        angels = np.array([np.angle(el[0] + el[1] * 1j, deg=True) for el in diff])
+        neg_angels = np.where(angels < 0)[0]
+        angels[neg_angels] = 360 + angels[neg_angels]
+
+        mag = np.linalg.norm(diff, axis=1)
+
+        diff_all.append(diff)
+        angels_all.append(angels)
+        mag_all.append(mag)
+        real_img_points = img_ps.reshape(-1, 2)
+        img_points_all.append(real_img_points)
+
+    diff_all = np.concatenate(diff_all).reshape(-1, 2)
+    angels_all = np.concatenate(angels_all).flatten()
+    mag_all = np.concatenate(mag_all).flatten()
+    img_points_all = np.concatenate(img_points_all).reshape(-1, 2)
+    return img_points_all, diff_all, angels_all, mag_all
+
+
+def projectPoints_and_cal_angles_and_mag(image_points, obj_points, rvecs, tvecs, cameraMatrix, distCoeffs):
+    """
+    Calgulates the angels and magnitude for the projectet points in relation to the feature points using rvecs, tvecs, cameraMatrix, distCoeffs
     :param image_points: The points object points are found in the image
     :param obj_points: The object points
     :param rvecs (ndarray): Rotation vectors estimated for each pattern view
@@ -154,31 +190,18 @@ def cal_angles_and_mag(image_points, obj_points, rvecs, tvecs, cameraMatrix, dis
     :return mag: The L2 magnitute for each of the points
     """
     img_points_all = []
-    angels_all = []
-    diff_all = []
-    mag_all = []
+    project_points = []
 
     for img_ps, obj_ps, rvec, tvec in zip(image_points, obj_points, rvecs, tvecs):
         real_img_points = img_ps.reshape(-1, 2)
 
         repor_img_points = cv2.projectPoints(obj_ps, rvec, tvec, cameraMatrix, distCoeffs)[0].reshape(-1, 2)
-        diff = real_img_points - repor_img_points
 
-        angels = np.array([np.angle(el[0] + el[1] * 1j, deg=True) for el in diff])
-        neg_angels = np.where(angels < 0)[0]
-        angels[neg_angels] = 360 + angels[neg_angels]
-
-        mag = np.linalg.norm(diff, axis=1)
-
+        project_points.append(repor_img_points)
         img_points_all.append(real_img_points)
-        diff_all.append(diff)
-        angels_all.append(angels)
-        mag_all.append(mag)
 
-    diff_all = np.concatenate(diff_all).reshape(-1, 2)
+    _, diff_all, angels_all, mag_all = cal_angles_and_mag(img_points_all, project_points)
     img_points_all = np.concatenate(img_points_all).reshape(-1, 2)
-    angels_all = np.concatenate(angels_all).flatten()
-    mag_all = np.concatenate(mag_all).flatten()
     return img_points_all, diff_all, angels_all, mag_all
 
 
