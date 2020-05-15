@@ -6,7 +6,7 @@ import pickle
 
 from . import knot_generators as kg
 
-# The implementation of this B-spline-based camera model is based on the description in the 
+# The implementation of this B-spline-based camera model is based on the description in the
 # article "Generalized B-spline Camera Model" by Johannes Beck and Christoph Stiller.
 
 # Resources:
@@ -82,7 +82,7 @@ class CentralModel:
                 return 1
             else:
                 return 0
-        
+
         # Equation 3
         term1a = x - t[i]
         term1b = t[i + k] - t[i]
@@ -162,7 +162,7 @@ class CentralModel:
 
         return samples
 
-    def _task(self, i, pts, output): 
+    def _task(self, i, pts, output):
         output.put(np.array([np.hstack([pt[0], self.sample(pt[1], pt[2])]) for pt in pts]))
 
     def _sample_many(self, pts, threads=1):
@@ -187,13 +187,13 @@ class CentralModel:
 
         processes = [multiprocessing.Process(target=self._task, args=(i, split[threads - i - 1], results)) for i in range(threads)]
 
-        for process in processes: 
+        for process in processes:
             process.start()
 
         results = np.vstack([results.get() for i in range(threads)])
         results = results[results[:,0].argsort()]
 
-        for process in processes: 
+        for process in processes:
             process.join()
 
         return results[:,:-1]
@@ -208,7 +208,7 @@ class CentralModel:
         assert not (isinstance(u, (np.ndarray, list)) or isinstance(v, (np.ndarray, list))) and all(np.isreal([u, v])), 'u and v must be numbers.'
 
         is_even = lambda x: x % 2 == 0
-        
+
         dx = self._normalize(u, self.grid_width, self.image_width)
         dy = self._normalize(v, self.grid_height, self.image_height)
 
@@ -227,9 +227,9 @@ class CentralModel:
         else:
             x = np.arange(np.ceil(-0.5*self.order), np.ceil(0.5*self.order) + 1) + np.floor(px)
             y = np.arange(np.ceil(-0.5*self.order), np.ceil(0.5*self.order) + 1) + np.floor(py)
-            
+
         return np.transpose(np.meshgrid(x, y))
-    
+
     def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', tol=None, options={}, return_results=False):
         """Returns the corresponding pixel coordinates for a given ray. \n
 
@@ -278,7 +278,7 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 
     verbose: Changes how much the function prints while running.\n
     initial_values: Optional numpy array with the shape of 'target_values'. Provides the initial control points to the least squares solver.
     """
-    if initial_values == None: 
+    if initial_values == None:
         initial_values = target_values
 
     assert target_values.shape == initial_values.shape, 'target_values and initial_values must have the same shape.'
@@ -289,9 +289,9 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 
         grid = np.reshape(params, grid_shape)
 
         cm = CentralModel(
-            image_dimensions=image_dimensions, 
-            grid_dimensions=grid_dimensions, 
-            control_points=grid, 
+            image_dimensions=image_dimensions,
+            grid_dimensions=grid_dimensions,
+            control_points=grid,
             order=order,
             knot_method=knot_method,
             end_divergence=end_divergence,
@@ -302,16 +302,16 @@ def fit_central_model(target_values, image_dimensions, grid_dimensions, order = 
 
     if verbose > 0:
         print('Starting least squares fitting of CentralModel.')
-        
+
     result = least_squares(fun, initial_values.ravel(), verbose=verbose, args=(target_values.ravel(), shape, image_dimensions, grid_dimensions, order, knot_method, end_divergence, min_basis_value))
     target_values = np.reshape(target_values, (-1,3))
 
     ctrl = result['x'].reshape(shape)
 
     cm = CentralModel(
-        image_dimensions=image_dimensions, 
-        grid_dimensions=grid_dimensions, 
-        control_points=ctrl, 
+        image_dimensions=image_dimensions,
+        grid_dimensions=grid_dimensions,
+        control_points=ctrl,
         order=order,
         knot_method=knot_method,
         end_divergence=end_divergence,
@@ -335,7 +335,7 @@ def cm_save(cm, fp):
 if __name__ == '__main__':
     import time
 
-    shape = (500,500)
+    shape = (500, 500)
 
     ## Multithreading Test
     if False:
@@ -358,7 +358,7 @@ if __name__ == '__main__':
         end = time.time()
 
         print('Non-threaded version used {:.2f} s. ({} iter/s)'.format(end - start, int(len(pts) / (end - start))))
-    
+
     ## Sparsity Test
     if False:
         dim = (200, 200)
@@ -380,7 +380,7 @@ if __name__ == '__main__':
         dim = (200, 200)
         grid = (5,5,3)
         order = 3
-        
+
         ctrl = np.full(grid, 0)
 
         for i, row in enumerate(ctrl):
@@ -406,7 +406,7 @@ if __name__ == '__main__':
         dim = (200, 200)
         grid = (5,5,3)
         order = 3
-        
+
         ctrl = np.full(grid, 0)
 
         for i, row in enumerate(ctrl):
@@ -431,7 +431,7 @@ if __name__ == '__main__':
         u, v = cm.forward_sample(ray, method='Powell', tol=1e-8, options=options)
 
         s = cm.sample(u, v)
-        
+
         print(ray, s, ray-s)
 
     ## Real world forward sampling test
@@ -456,11 +456,11 @@ if __name__ == '__main__':
 
         # add noise
         if False:
-            ray += np.random.normal(error_mean, error_std, 3)   
+            ray += np.random.normal(error_mean, error_std, 3)
             print('Added noise to ray. Now {}.'.format(ray))
 
         print('using {}'.format(method))
-        try: 
+        try:
             u, v = cm.forward_sample(ray, method=method, options=options)
             error = (sample_point[0] - u, sample_point[1] - v)
 

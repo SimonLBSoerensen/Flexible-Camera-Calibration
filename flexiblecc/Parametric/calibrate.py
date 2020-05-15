@@ -92,7 +92,7 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
     img_points = []
 
     if verbose == 1:
-        iter = tqdm(gray_imgs)
+        iter = tqdm(gray_imgs, unit="image")
         print("Finding chessboard pattern in the images")
     else:
         iter = gray_imgs
@@ -150,7 +150,8 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
 
     itr = enumerate(gray_imgs)
     if verbose == 1:
-        itr = tqdm(itr)
+        print("Finding charuco features")
+        itr = tqdm(itr, total=len(gray_imgs), unit="image")
 
     for i, img_gray in itr:
         markerCorners, markerIds, rejectedImgPoints = cv2.aruco.detectMarkers(img_gray, dictionary)
@@ -182,6 +183,7 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
                     cv2.aruco.drawDetectedMarkers(img_gray_draw, markerCorners, markerIds)
                     cv2.aruco.drawDetectedCornersCharuco(img_gray_draw, new_better_charucoCorners, charucoIds)
                     cv2.imwrite(os.path.join(draw, "{}.png".format(i)), img_gray_draw)
+
     return markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all
 
 
@@ -192,7 +194,7 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
                             cv2.CALIB_TILTED_MODEL), verbose=0, draw=None):
     """
     Will do a charuco camera calibration. This will be done by finding the charuco boards in the provided grayscale images.
-
+    -> calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board
     :param gray_imgs: Array there contains the images with chessboards. The images has to be in grayscale colorspace and in a "int" datatype
     :type gray_imgs: iterable
     :param squaresX: number of chessboard squares in X direction
@@ -299,6 +301,9 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     charucoCorners_all, charucoIds_all = np.array(charucoCorners_all), np.array(charucoIds_all)
     markerCorners_all, armarkerIds_all = np.array(markerCorners_all), np.array(markerIds_all)
     obj_points_all = np.array(obj_points_all)
+
+    if verbose == 1:
+        print("Calibration done")
 
     return calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, \
            perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board

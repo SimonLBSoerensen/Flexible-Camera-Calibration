@@ -3,3 +3,4 @@ from . import centralmodel
 from . import distorsion
 from . import voronoi
 from . import stats
+from . import rtvecs_illustration
