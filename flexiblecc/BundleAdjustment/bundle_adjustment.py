@@ -164,14 +164,14 @@ class BundleAdjustment:
         n_images = self.all_corners_2D.shape[0]
         cm_shape = self.p['cm_shape']
 
-        cm_control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
+        self.cm_control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
         self.rvecs = ls_params[np.prod(cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
         self.tvecs = ls_params[np.prod(cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
 
         b_spline_object = CentralModel(
             image_dimensions=self.p['image_dimensions'],
             grid_dimensions=self.p['cm_dimensions'],
-            control_points=cm_control_points,
+            control_points=self.cm_control_points,
             order=self.p['cm_order'],
             knot_method=self.p['cm_knot_method'],
             min_basis_value=self.p['cm_min_basis_value'],
@@ -213,16 +213,16 @@ class BundleAdjustment:
         image_size = self.p['image_dimensions']
         n_images = self.obj_points.shape[0]
 
-        control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
-        rvecs = ls_params[np.prod(cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
-        tvecs = ls_params[np.prod(cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
+        self.cm_control_points = ls_params[:np.prod(cm_shape)].reshape(cm_shape)
+        self.rvecs = ls_params[np.prod(cm_shape):][:n_images * 3].reshape((n_images, 3, 1))
+        self.tvecs = ls_params[np.prod(cm_shape) + n_images * 3:].reshape((n_images, 3, 1))
 
         self.transform_board_to_cam()
 
         b_spline_object = CentralModel(
             image_dimensions=self.p['image_dimensions'],
             grid_dimensions=self.p['cm_dimensions'],
-            control_points=control_points,
+            control_points=self.cm_control_points,
             order=self.p['cm_order'],
             knot_method=self.p['cm_knot_method'],
             min_basis_value=self.p['cm_min_basis_value'],
@@ -312,7 +312,7 @@ class BundleAdjustment:
         ls_params = np.hstack((self.cm_control_points.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
 
         print('Calculating initial residuals')
-        residuals_init = self.calc_residuals_3D(ls_params, p)
+        residuals_init = self.calc_residuals_3D(ls_params)
 
         A = None #Sparsity matrix, describes the relationship between parameters (cm_control_points, rvecs, tvecs) and residuals.
         if self.p['ls_sparsity']:
@@ -328,8 +328,8 @@ class BundleAdjustment:
             x_scale='jac',
             ftol=self.p['ls_ftol'],
             gtol=self.p['ls_gtol'],
-            method=self.p['ls_method'],
-            args=(False))
+            method=self.p['ls_method']
+            )
 
         n_images = len(self.rvecs)
 

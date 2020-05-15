@@ -22,7 +22,7 @@ cm_control_points = res.x[:np.prod(p['cm_shape'])].reshape(p['cm_shape'])
 rvecs = res.x[np.prod(p['cm_shape']):][:n_images * 3].reshape((n_images, 3, 1))
 tvecs = res.x[np.prod(p['cm_shape']) + n_images * 3:].reshape((n_images, 3, 1))
 
-ba = BundleAdjustment(p, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, cm_control_points, use_control_points=True)
+ba = BundleAdjustment(p, obj_points, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, cm_control_points)
 
 ls_params = np.hstack((cm_control_points.ravel(), rvecs.ravel(), tvecs.ravel()))
 
