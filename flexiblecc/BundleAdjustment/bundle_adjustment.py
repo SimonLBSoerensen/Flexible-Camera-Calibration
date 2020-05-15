@@ -335,7 +335,7 @@ class BundleAdjustment:
         """
         start_fitting = time()
 
-        if self.cm_control_points == None:
+        if self.cm_control_points is None:
             self.cm_control_points = self.cm_init_ctrl_ptns
 
         ls_params = np.hstack((self.cm_control_points.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
@@ -457,10 +457,10 @@ if __name__ == '__main__':
     start_time = time()
 
     ba = BundleAdjustment(obj_points_test, rvecs, tvecs, all_corners_2D, cameraMatrix, distCoeffs, image_dimensions=(4032,3024),
-    cm_dimensions=None, cm_stepsize=1000, cm_border=0, cm_order=2, cm_fit_control_points=True, 
+    cm_dimensions=None, cm_stepsize=2000, cm_border=0, cm_order=2, cm_fit_control_points=True, 
     cm_knot_method='open_uniform', cm_min_basis_value=1e-4, cm_end_divergence=1e-10, cm_threads=1,
     ls_sparsity=True, ls_verbose=2, ls_ftol=1, ls_gtol=1, ls_method='trf', control_points=None)
 
-    cm, res, rvecs, tvecs = ba.least_squares(True)
+    cm, res, rvecs, tvecs = ba.least_squares(False)
 
     pass
