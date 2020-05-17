@@ -118,6 +118,12 @@ class BundleAdjustment:
         self.rvecs = np.array(rvecs)
         self.tvecs = np.array(tvecs)
 
+        self.A = None #Sparsity matrix, describes the relationship between parameters (cm_control_points, rvecs, tvecs) and residuals.
+        if self.ls_sparsity:
+            print('Generating sparsity matrix')
+            self.A = self.get_sparsity_matrix(cm_shape=self.cm_shape, image_dimensions=self.image_dimensions)
+
+
         if control_points != None:
             self.cm_init_ctrl_ptns = None
             self.cm_control_points = control_points.reshape((-1,3))
@@ -345,17 +351,12 @@ class BundleAdjustment:
 
         ls_params = np.hstack((self.cm_control_points.ravel(), self.rvecs.ravel(), self.tvecs.ravel()))
 
-        A = None #Sparsity matrix, describes the relationship between parameters (cm_control_points, rvecs, tvecs) and residuals.
-        if self.ls_sparsity:
-            print('Generating sparsity matrix')
-            A = self.get_sparsity_matrix(cm_shape=self.cm_shape, image_dimensions=self.image_dimensions)
-
         print('Performing least squares optimization on the control points and position of the chessboards')
 
         res = optimize.least_squares(
             fun=self.calc_residuals_3D,
             x0=ls_params,
-            jac_sparsity=A,
+            jac_sparsity=self.A,
             verbose=self.ls_verbose,
             x_scale='jac',
             ftol=self.ls_ftol,
