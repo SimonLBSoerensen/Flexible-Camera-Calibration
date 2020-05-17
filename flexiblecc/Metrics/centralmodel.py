@@ -33,7 +33,7 @@ def make_cm_vec_plot(cm, image_dimensions_step):
     ax.set_ylim(0, h)
     ax.set_zlim(0, np.max(W) * 2)
     plt.tight_layout()
-
+    
     return ax
 
 

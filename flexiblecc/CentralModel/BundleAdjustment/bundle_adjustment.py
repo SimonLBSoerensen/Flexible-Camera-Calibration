@@ -302,7 +302,7 @@ class BundleAdjustment:
             control_points = cm.active_control_points(all_corners_2D[i, 0], all_corners_2D[i, 1])
             control_points = control_points.reshape((-1, 2))
 
-            temp = np.zeros(cm_shape)
+            temp = np.ones(cm_shape)  # Set to ones to avoid errors, if calculated incorrectly
             for point in control_points:
                 temp[int(point[0]), int(point[1])] = np.array([1, 1, 1])
 
