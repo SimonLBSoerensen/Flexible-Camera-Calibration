@@ -15,7 +15,7 @@ def maha_dist(x, mean, cov):
     :param x: The point
     :param mean: The mean vector
     :param cov:  The covarian matrix
-    :return: The malahonobis distance
+    :return distance: The malahonobis distance
     """
     return np.matmul(np.matmul((np.array(x) - mean).transpose(), np.linalg.inv(cov)), (np.array(x) - mean))
 
@@ -27,7 +27,7 @@ def maha_dist_arr(arr, mean, cov):
     :param arr: The array of points
     :param mean: The mean vector
     :param cov:  The covarian matrix
-    :return: The malahonobis distance
+    :return distance: The malahonobis distance
     """
     return [maha_dist(x, mean, cov) for x in arr]
 
@@ -52,7 +52,7 @@ def plot_3DMVN(mean, cov, start, end, res):
     :param start: The sample space start
     :param end: The sample space end
     :param res: The sample space resulusion
-    :return: The axis for the plot
+    :return ax: The axis for the plot
     """
     assert len(mean) == 2, "plot_3DMVN can only handle p=2 MVN's"
 
@@ -74,7 +74,7 @@ def plot_qqplot(arr, ax=None):
     """
     Makes a QQ-Plot in relations to chi^2
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
-    :return: The axis for the plot
+    :return ax: The axis for the plot
     """
     p = arr.shape[1]
     if ax is None:
@@ -119,7 +119,7 @@ def plot_seaborn_scatter_matrix(arr, kde=True, names=None):
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param kde: Rather or not to ues kernel density estimation in the diagronal plots
     :param names: A list of the names of the p dimensions. If None will be named "Dimension i"
-    :return: The axis for the plot
+    :return axs: The axis for the plot
     """
     axs = sns.pairplot(pd.DataFrame(arr, columns=["Dimension {}".format(i) for i in
                                                   range(1, arr.shape[1] + 1)] if names is None else names),
@@ -132,7 +132,7 @@ def plot_matplotlib_scatter_matrix(arr, ax_info=None):
     Makes a matplotlib based scatter matrix
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param ax_info: [ax, ax_pos], where ax is the axis to plot on and ax_pos is which plot to make (i vs j demisions)
-    :return: The axis for the plot
+    :return axs: The axis for the plot
     """
     p = arr.shape[1]
 
@@ -165,7 +165,7 @@ def _plot_model_check_in_one_wscatter(arr, violinplot=False):
     """
     Makes a model check plot with a scatter matrix
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
-    :return: The axis for the plot
+    :return axs: The axis for the plot
     """
     p = arr.shape[1]
 

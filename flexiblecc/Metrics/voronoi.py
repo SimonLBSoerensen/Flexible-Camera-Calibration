@@ -4,6 +4,7 @@ import numpy as np
 from collections.abc import Iterable
 import cv2
 
+
 def _voronoi_finite_polygons_2d(vor, radius=None):
     """
     Reconstruct infinite voronoi regions in a 2D diagram to finite
@@ -11,22 +12,14 @@ def _voronoi_finite_polygons_2d(vor, radius=None):
 
     Taken from: https://gist.github.com/pv/8036995 (Author: Pauli Virtanen)
 
-    Parameters
-    ----------
-    vor : Voronoi
-        Input diagram
-    radius : float, optional
-        Distance to 'points at infinity'.
-
-    Returns
-    -------
-    regions : list of tuples
-        Indices of vertices in each revised Voronoi regions.
-    vertices : list of tuples
-        Coordinates for revised Voronoi vertices. Same as coordinates
-        of input vertices, with 'points at infinity' appended to the
-        end.
-
+    :argument vor: Voronoi, Input diagram
+    :type vor: scipy.spatial.Voronoi
+    :argument radius: Distance to 'points at infinity'.
+    :type radius: float
+    :return regions: Indices of vertices in each revised Voronoi regions.
+    :rtype regions: list of tuples
+    :return vertices: Coordinates for revised Voronoi vertices. Same as coordinates of input vertices, with 'points at infinity' appended to the end.
+    :rtype vertices: list of tuples
     """
 
     if vor.points.shape[1] != 2:
@@ -90,10 +83,7 @@ def _voronoi_finite_polygons_2d(vor, radius=None):
     return new_regions, np.asarray(new_vertices)
 
 
-def _color_angle(values, deg=True):
-    if not deg:
-        values = np.rad2deg(values)
-
+def _color_angle(values):
     if not isinstance(values, Iterable):
         values = [values]
 
@@ -134,6 +124,13 @@ def _color_angle(values, deg=True):
     RGB = np.round(RGB * 255).astype(int)
 
     return RGB
+
+
+def _color_bw(value):
+    if value:
+        return np.round([0, 0, 0])  # return black color
+    else:
+        return np.round([255, 255, 255])  # return white color
 
 
 def cal_angles_and_mag(image_points, project_points):
@@ -205,10 +202,40 @@ def projectPoints_and_cal_angles_and_mag(image_points, obj_points, rvecs, tvecs,
     return img_points_all, diff_all, angels_all, mag_all
 
 
-def plot_voronoi(points, points_angle, deg=True, ax=None, xy_lim=True, radius=None, plot_points=False):
+def plot_voronoi(points, measures, color_func=None, angles=True, angle_deg=True, magnitude_treshold=0.2, ax=None, xy_lim=True,
+                 radius=None, plot_points=False):
     """
-    Plots voronoi diagram for the given points
+    Plots voronoi diagram over angles for the given points
+
+    :argument points: The image points the measurement are messuret from
+    :type points: array
+    :argument measures: The measurements for the points
+    :type measures: array
+    :argument color_func: The funtion there resutrns wivh color to use in the voronoi diagram. f(messurment)
+    :type color_func: callerble
+    :argument angles: used if color_func is None, If true the measures are angles, if false the measures are tagen as magnitudes
+    :type angles: bool
+    :argument angle_deg: used if color_func is None, If true the angles are in degrres else in radians
+    :type angle_deg: bool
+    :argument magnitude_treshold: used if color_func is None, The treshold to color magnitues after. Blower treshold will be black over will be white
+    :type magnitude_treshold: float
+    :argument ax: The axis to plot on
+    :type ax: matplotlib.axes
+    :argument xy_lim: If true the x and y lim will be set to the min/max of the points in x and y axis
+    :type xy_lim: bool
+    :argument radius: The radius to for 'points at infinity' to end at
+    :type radius: float
+    :argument plot_points: If true the points weill be plottet as well
+    :type plot_points: bool
+
+    :return ax: The axis for the plot
+    :rtype ax: matplotlib.axes
     """
+    assert len(points) == len(measures), "Points and measures has to have same lenght"
+
+    if not isinstance(measures, np.ndarray):
+        measures = np.array(measures)
+
     if ax is None:
         ax = plt.gca()
 
@@ -218,9 +245,18 @@ def plot_voronoi(points, points_angle, deg=True, ax=None, xy_lim=True, radius=No
     vor = Voronoi(points)
     regions, vertices = _voronoi_finite_polygons_2d(vor, radius=radius)
 
+    if color_func is None:
+        if angles:
+            if not angle_deg:
+                measures = np.rad2deg(measures)
+            color_func = _color_angle
+        else:
+            measures = measures <= magnitude_treshold
+            color_func = _color_bw
+
     for i, region in enumerate(regions):
         polygon = vertices[region]
-        ax.fill(*zip(*polygon), color=_color_angle(points_angle[i], deg=deg) / 255)
+        ax.fill(*zip(*polygon), color=color_func(measures[i]) / 255)
 
     if xy_lim:
         ax.set_xlim([vor.min_bound[0], vor.max_bound[0]])

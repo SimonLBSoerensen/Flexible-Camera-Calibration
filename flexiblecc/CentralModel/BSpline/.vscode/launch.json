@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\generate_points.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Plot",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\plot_points.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Fit",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\central_model_fit.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

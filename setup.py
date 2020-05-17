@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="flexiblecc",
-    version="0.1.13",
+    version="0.1.15",
     author="Simon L. B. Sørensen and contributors",
     author_email="simonlyckbjaert@hotmail.com",
     description="Flexible Camera Calibration",
