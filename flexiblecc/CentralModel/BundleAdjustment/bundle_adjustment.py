@@ -41,7 +41,7 @@ class BundleAdjustment:
         :param distCoeffs: Vector of distortion coefficients of 4, 5, 8, 12 or 14 elements
             (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]])
         :type distCoeffs: ndarray
-        :param image_dimensions: Dimensions of the images used (width, height)
+        :param image_dimensions: Dimensions of the images used (height, width)
         :type image_dimensions: tuple
         :param cm_dimensions: Dimensions of control points area used in CentralModel (width, height)
         :type cm_dimensions: tuple
@@ -76,7 +76,7 @@ class BundleAdjustment:
         """
         start_init = time()
 
-        self.image_dimensions = image_dimensions
+        self.image_dimensions = image_dimensions[::-1]  # Flipping image_dimensions to (width, height)
         if cm_dimensions is None:
             cm_dimensions = image_dimensions
         self.cm_dimensions = cm_dimensions
