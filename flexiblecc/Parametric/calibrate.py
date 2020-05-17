@@ -160,6 +160,8 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
 
         if markers_found:
 
+            markerCorners, markerIds, rejectedCorners, recoveredIdxs = cv2.aruco.refineDetectedMarkers(img_gray, board, markerCorners, markerIds, rejectedImgPoints)
+
             markerCorners_all.append(markerCorners)
             markerIds_all.append(markerIds)
 
