@@ -24,7 +24,7 @@ sys.stdout = open(os.path.join(folder_out, "console.txt"), 'w')
 datasetpath = "../CalImgs/ChArUco - Sorted/Samsung Galaxy S10 Plus/WideAngle/Fold_1/*.jpg"
 
 paras = {
-    "cm_stepsize": 2000,
+    "cm_stepsize": 252,
     "cm_order": 2,
     "ls_ftol": 1e-8,
     "ls_gtol": 1e-8,
@@ -100,3 +100,4 @@ fcc.Metrics.voronoi.plot_voronoi(imp, angels)
 plt.savefig(os.path.join(folder_out, "CM_Voronoi.png"))
 plt.close()
 
+sys.stdout.close()

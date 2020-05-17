@@ -132,6 +132,9 @@ def _color_bw(value):
     else:
         return np.round([255, 255, 255])  # return white color
 
+def _color_gray(me, min_=0, max_=8):
+    gray = np.clip((me - min_)/(max_ - min_), 0, 1)*255
+    return np.round(np.array([gray,gray,gray])).astype(int)
 
 def cal_angles_and_mag(image_points, project_points):
     """
@@ -203,7 +206,7 @@ def projectPoints_and_cal_angles_and_mag(image_points, obj_points, rvecs, tvecs,
 
 
 def plot_voronoi(points, measures, color_func=None, angles=True, angle_deg=True, magnitude_treshold=0.2, ax=None, xy_lim=True,
-                 radius=None, plot_points=False):
+                 radius=None, plot_points=False, magnitude_color_mode="bw"):
     """
     Plots voronoi diagram over angles for the given points
 
@@ -217,7 +220,7 @@ def plot_voronoi(points, measures, color_func=None, angles=True, angle_deg=True,
     :type angles: bool
     :argument angle_deg: used if color_func is None, If true the angles are in degrres else in radians
     :type angle_deg: bool
-    :argument magnitude_treshold: used if color_func is None, The treshold to color magnitues after. Blower treshold will be black over will be white
+    :argument magnitude_treshold: used if color_func is None, The treshold to color magnitues after. If magnitude_color_mode is "bw" Blower treshold will be black over will be white. If magnitude_color_mode is "gray" then treshold sets what color shoud be completly white
     :type magnitude_treshold: float
     :argument ax: The axis to plot on
     :type ax: matplotlib.axes
@@ -227,6 +230,7 @@ def plot_voronoi(points, measures, color_func=None, angles=True, angle_deg=True,
     :type radius: float
     :argument plot_points: If true the points weill be plottet as well
     :type plot_points: bool
+    ;:argument magnitude_color_mode: The color mode to use with magnitud data, "bw" or "gray"
 
     :return ax: The axis for the plot
     :rtype ax: matplotlib.axes
@@ -251,8 +255,12 @@ def plot_voronoi(points, measures, color_func=None, angles=True, angle_deg=True,
                 measures = np.rad2deg(measures)
             color_func = _color_angle
         else:
-            measures = measures <= magnitude_treshold
-            color_func = _color_bw
+            if magnitude_color_mode == "bw":
+                measures = measures <= magnitude_treshold
+                color_func = _color_bw
+            elif magnitude_color_mode == "gray":
+                def color_func(me):
+                    return _color_gray(me, max_=magnitude_treshold)
 
     for i, region in enumerate(regions):
         polygon = vertices[region]
