@@ -83,7 +83,7 @@ fcc.CentralModel.cm_save(cm, os.path.join(folder_out, "cm"))
 
 rmsCM, residuals_2D, estimated_points_2D, correct_points_2D = ba.calc_residuals_2D(np.array(res.x), return_points_2D=True, verbose=1)
 
-np.save(os.path.join(folder_out, "calc_residuals_2D.npy"), [residuals_2D, estimated_points_2D, correct_points_2D])
+np.save(os.path.join(folder_out, "calc_residuals_2D.npy"), [rmsCM, residuals_2D, estimated_points_2D, correct_points_2D])
 
 rms_vs = f"{calibrate_retval:0.5f} VS {rmsCM:0.5f}"
 with open(os.path.join(folder_out, rms_vs+".txt"), "w") as f:
