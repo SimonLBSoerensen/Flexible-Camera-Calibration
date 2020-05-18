@@ -76,7 +76,8 @@ plt.close()
 print(f"RMS: {calibrate_retval:0.4f} pixels")
 
 
-ba = BundleAdjustment(obj_points_all, rvecs, tvecs, charucoCorners_all, cameraMatrix, distCoeffs, image_shape[::-1],
+
+ba = BundleAdjustment(obj_points_all, rvecs, tvecs, charucoCorners_all, cameraMatrix, distCoeffs, image_shape,
                       cm_stepsize=paras["cm_stepsize"], cm_order=paras["cm_order"], ls_ftol=paras["ls_ftol"], ls_gtol=paras["ls_gtol"])
 
 cm, res, rvecs_new, tvecs_new = ba.least_squares(folder_out)
