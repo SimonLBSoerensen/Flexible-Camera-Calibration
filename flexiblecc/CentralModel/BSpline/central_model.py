@@ -251,7 +251,7 @@ class CentralModel:
 
         def fun(params, ray, normalize):
             u, v = params[0], params[1]
-            s = self.sample(u, v)
+            s = self.sample(u, v, normalize=normalize)
 
             return np.linalg.norm(s - ray)
 
