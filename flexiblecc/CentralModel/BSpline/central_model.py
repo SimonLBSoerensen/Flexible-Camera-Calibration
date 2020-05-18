@@ -246,8 +246,9 @@ class CentralModel:
         """
         assert isinstance(ray, np.ndarray) and ray.size == 3, '\'ray\' must be an array containing the direction of a 3d ray.'
 
-        ray = ray.reshape((3,))
-        ray /= np.linalg.norm(ray)
+        if normalize:
+            ray = ray.reshape((3,))
+            ray /= np.linalg.norm(ray)
 
         def fun(params, ray, normalize):
             u, v = params[0], params[1]
