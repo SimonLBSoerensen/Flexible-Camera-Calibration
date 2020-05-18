@@ -121,7 +121,7 @@ class CentralModel:
 
         return t
 
-    def sample(self, u, v, normalize=True):
+    def sample(self, u, v, normalize=False):
         """Used to sample the b-spline surface. \n
 
         Keyword arguments: \n
@@ -233,7 +233,7 @@ class CentralModel:
 
         return np.transpose(np.meshgrid(x, y))
 
-    def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', tol=None, options={}, return_results=False):
+    def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', tol=None, options={}, return_results=False, normalize=True):
         """Returns the corresponding pixel coordinates for a given ray. \n
 
         Keyword arguments: \n
@@ -242,13 +242,14 @@ class CentralModel:
         use_bounds: Sets the image dimensions as bounds for the optimizer. \n
         method: Optimization method from scipy's \'minimize\'. \n
         options: Options for the optimization. See scipu's \'minimize\'. \n
-        return_resultsc: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
+        return_results: If True the function returns the result of the minimization. Otherwise the function just returns the pixel coordinates of the ray.
         """
         assert isinstance(ray, np.ndarray) and ray.size == 3, '\'ray\' must be an array containing the direction of a 3d ray.'
 
         ray = ray.reshape((3,))
+        ray /= np.linalg.norm(ray)
 
-        def fun(params, ray):
+        def fun(params, ray, normalize):
             u, v = params[0], params[1]
             s = self.sample(u, v)
 
@@ -261,7 +262,7 @@ class CentralModel:
         if use_bounds and not method in ['Powell']:
             bounds = np.array([(0, self.image_width), (0, self.image_height)])
 
-        res = minimize(fun, x0, args=(ray), tol=tol, bounds=bounds, method=method, options=options)
+        res = minimize(fun, x0, args=(ray, normalize), tol=tol, bounds=bounds, method=method, options=options)
 
         if return_results:
             return res
