@@ -124,7 +124,7 @@ class BundleAdjustment:
             self.A = self.get_sparsity_matrix(cm_shape=self.cm_shape, image_dimensions=self.image_dimensions)
 
 
-        if control_points != None:
+        if control_points is not None:
             self.cm_init_ctrl_ptns = None
             self.cm_control_points = control_points.reshape((-1,3))
         else:

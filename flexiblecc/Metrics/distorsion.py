@@ -51,7 +51,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
     plt.subplot(1, 2, 2)
     plt.title("Euclidean distance in pixels between distorted and undistorted contour")
     CS = plt.contour(Y, X, errors_grid, levels=contour_n_levels)
-    plt.clabel(CS, inline=1, fontsize=10)
+    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
 
     plt.xticks([], [])
     plt.yticks([], [])
@@ -93,7 +93,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
     plt.subplot(1, 2, 2)
     plt.title("Angle between distorted and undistorted contour [deg]")
     CS = plt.contour(Y, X, angels_grid, levels=contour_n_levels)
-    plt.clabel(CS, inline=1, fontsize=10)
+    plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
 
     plt.xticks([], [])
     plt.yticks([], [])
