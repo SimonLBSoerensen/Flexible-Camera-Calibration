@@ -78,7 +78,7 @@ class BundleAdjustment:
 
         self.image_dimensions = image_dimensions[::-1]  # Flipping image_dimensions to (width, height)
         if cm_dimensions is None:
-            cm_dimensions = image_dimensions
+            cm_dimensions = self.image_dimensions
         self.cm_dimensions = cm_dimensions
         self.cm_stepsize = cm_stepsize
         self.cm_border = cm_border
@@ -207,8 +207,7 @@ class BundleAdjustment:
         # Calculate backward projected rays (b_spline)
         for i, image_corners_2D in enumerate(self.all_corners_2D):
             for j, corner_2D in enumerate(image_corners_2D):
-                sample = cm.sample(corner_2D[0, 0], corner_2D[0, 1])
-                self.sampled_spline_rays[i][j] = sample#cm.sample(corner_2D[0, 0], corner_2D[0, 1])
+                self.sampled_spline_rays[i][j] = cm.sample(corner_2D[0, 0], corner_2D[0, 1])
 
         sampled_spline_rays = np.concatenate(self.sampled_spline_rays)
         if return_points_3D:
@@ -217,7 +216,7 @@ class BundleAdjustment:
             return transformed_corners_3D.ravel() - sampled_spline_rays.ravel()
 
 
-    def calc_residuals_2D(self, ls_params, return_points_2D=False, verbose=0, method='Powell'):
+    def calc_residuals_2D(self, ls_params, return_points_2D=False, verbose=0, method='Powell', normalize=True):
         """
         Returns 2D residuals, used to compare with parametric camera calibration
 
@@ -253,7 +252,7 @@ class BundleAdjustment:
             min_basis_value=self.cm_min_basis_value,
             end_divergence=self.cm_end_divergence)
             
-        # Calculate backward projected rays (b_spline)
+        # Calculate forward projected rays (b_spline)
         model_points = deepcopy(self.all_corners_2D)
         if verbose == 1:
             iter = tqdm(range(n_images), total=n_images, unit='image')
@@ -261,7 +260,7 @@ class BundleAdjustment:
             iter = range(n_images)
         for i in iter:
             for j in range(self.obj_points[i].shape[0]):
-                model_points[i][j] = cm.forward_sample(self.transformed_corners_3D[i][j,:,0], method=method)
+                model_points[i][j] = cm.forward_sample(self.transformed_corners_3D[i][j,:,0], method=method, normalize=normalize)
 
         residuals_manhattan = np.concatenate(model_points).ravel() - np.concatenate(self.all_corners_2D).ravel()
         residuals_euclidean = np.linalg.norm(residuals_manhattan.reshape((-1,2)), axis=1)
