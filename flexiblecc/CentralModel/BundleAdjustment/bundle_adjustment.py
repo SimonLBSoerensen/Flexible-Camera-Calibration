@@ -217,7 +217,7 @@ class BundleAdjustment:
             return transformed_corners_3D.ravel() - sampled_spline_rays.ravel()
 
 
-    def calc_residuals_2D(self, ls_params, return_points_2D=False, verbose=0):
+    def calc_residuals_2D(self, ls_params, return_points_2D=False, verbose=0, method='Powell'):
         """
         Returns 2D residuals, used to compare with parametric camera calibration
 
@@ -261,7 +261,7 @@ class BundleAdjustment:
             iter = range(n_images)
         for i in iter:
             for j in range(self.obj_points[i].shape[0]):
-                model_points[i][j] = cm.forward_sample(self.transformed_corners_3D[i][j,:,0])
+                model_points[i][j] = cm.forward_sample(self.transformed_corners_3D[i][j,:,0], method=method)
 
         residuals_manhattan = np.concatenate(model_points).ravel() - np.concatenate(self.all_corners_2D).ravel()
         residuals_euclidean = np.linalg.norm(residuals_manhattan.reshape((-1,2)), axis=1)
@@ -302,7 +302,7 @@ class BundleAdjustment:
             control_points = cm.active_control_points(all_corners_2D[i, 0], all_corners_2D[i, 1])
             control_points = control_points.reshape((-1, 2))
 
-            temp = np.ones(cm_shape)  # Set to ones to avoid errors, if calculated incorrectly
+            temp = np.zeros(cm_shape)  # Set to ones to avoid errors, if calculated incorrectly
             for point in control_points:
                 temp[int(point[0]), int(point[1])] = np.array([1, 1, 1])
 
