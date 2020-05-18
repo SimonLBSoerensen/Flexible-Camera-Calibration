@@ -206,13 +206,15 @@ def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_str
     Makes a model check plot
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
     :param names: A list of the names of the p dimensions. If None will be named "Dimension i". Only in use when in_one=False
+    :param violinplot: If true teh boxplot will be replaced with violinplots
+    :param save_f_string: The pahe to save under where there are a "{}" there will be replaced with [save_f_string, box, qqplot] for the diffrent plots
     """
     if in_one:
         _plot_model_check_in_one_wscatter(arr, violinplot=violinplot)
     else:
         plot_seaborn_scatter_matrix(arr, names=names)
         if save_f_string:
-            plt.savefig(save_f_string.format("scatter_matrix"), **saveargs)
+            plt.savefig(save_f_string.format("save_f_string"), **saveargs)
         plt.show()
 
         plt.figure()
@@ -297,12 +299,13 @@ def plot_p_values(p_values, critical_value=None, x_labels=None, ax=None):
     return ax
 
 
-def correlation_test(a, b, nonparametric):
+def correlation_test(a, b, nonparametric=True):
     """
     Test for correlation. If nonparametric Spearman correlation test else Pearson correlation test
     :param a: First data arrray (one diamation)
     :param b: Secend data array (one diamation)
     :param nonparametric: Reather or not a nonparametric test has to be used. If not assumption that each dataset is normally distributed is made.
+    :return correlation_coefficient: The correlation coefficient
     :return p_value: The p_values
     """
     if nonparametric:

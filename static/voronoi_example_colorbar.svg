@@ -10,10 +10,10 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   height="225.29262pt"
+   height="244.01357pt"
    version="1.1"
-   viewBox="0 0 288.36392 225.29262"
-   width="288.36392pt"
+   viewBox="0 0 317.84973 244.01357"
+   width="317.84973pt"
    id="svg145"
    sodipodi:docname="voronoi_example_colorbar.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
@@ -43,8 +43,8 @@
      id="namedview147"
      showgrid="false"
      inkscape:zoom="1.3945717"
-     inkscape:cx="152.59489"
-     inkscape:cy="193.22069"
+     inkscape:cx="64.517811"
+     inkscape:cy="206.24206"
      inkscape:window-x="1072"
      inkscape:window-y="270"
      inkscape:window-maximized="1"
@@ -95,18 +95,18 @@
   </defs>
   <text
      id="text1110-6"
-     y="111.78554"
-     x="234.79272"
+     y="120.74046"
+     x="258.27853"
      style="font-style:normal;font-weight:normal;font-size:30px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
      xml:space="preserve"><tspan
-       y="139.15544"
-       x="234.79272"
+       y="148.11037"
+       x="258.27853"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
        id="tspan1108-7"
        sodipodi:role="line" /></text>
   <g
      id="g6257"
-     transform="translate(-39,0.2885569)"
+     transform="translate(-9.5141888,9.2434834)"
      style="stroke-linecap:butt;stroke-linejoin:round">
     <path
        d="m 305.21993,221.06266 h 21.744 V 3.622656 h -21.744 z"
@@ -511,7 +511,7 @@
   <g
      style="stroke-linecap:butt;stroke-linejoin:round"
      id="axes_1-3"
-     transform="matrix(0.67061101,0,0,0.67061101,-9.321493,-6.9743545)">
+     transform="matrix(0.67061101,0,0,0.67061101,14.164318,1.980572)">
     <g
        style="stroke-linecap:butt;stroke-linejoin:round"
        id="patch_2-8">
@@ -5566,45 +5566,45 @@
   </g>
   <text
      id="text1110-7-7-8"
-     y="222.90727"
-     x="100.28423"
+     y="243.8622"
+     x="123.77004"
      style="font-style:normal;font-weight:normal;font-size:30px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
      xml:space="preserve"><tspan
-       y="222.90727"
-       x="100.28423"
+       y="243.8622"
+       x="123.77004"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
        id="tspan1108-2-4-6"
        sodipodi:role="line">270°</tspan></text>
   <text
      id="text1110-7-7"
-     y="116.19731"
-     x="0.6567651"
+     y="125.15224"
+     x="-1.3574219"
      style="font-style:normal;font-weight:normal;font-size:30px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
      xml:space="preserve"><tspan
-       y="116.19731"
-       x="0.6567651"
+       y="125.15224"
+       x="-1.3574219"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
        id="tspan1108-2-4"
        sodipodi:role="line">180°</tspan></text>
   <text
      id="text1110-7"
-     y="8.9620657"
-     x="103.58501"
+     y="7.4169922"
+     x="127.07082"
      style="font-style:normal;font-weight:normal;font-size:30px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
      xml:space="preserve"><tspan
-       y="8.9620657"
-       x="103.58501"
+       y="7.4169922"
+       x="127.07082"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
        id="tspan1108-2"
        sodipodi:role="line">90°</tspan></text>
   <text
      id="text1110"
-     y="116.19488"
-     x="212.23946"
+     y="125.1498"
+     x="249.22527"
      style="font-style:normal;font-weight:normal;font-size:30px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
      xml:space="preserve"><tspan
-       y="116.19488"
-       x="212.23946"
+       y="125.1498"
+       x="249.22527"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:round"
        id="tspan1108"
        sodipodi:role="line">0°</tspan></text>
