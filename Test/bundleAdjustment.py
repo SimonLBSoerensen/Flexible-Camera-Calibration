@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
+#import sys
+#sys.path.append("../")
+
 import flexiblecc as fcc
 import glob
 import numpy as np
@@ -19,7 +22,7 @@ folder_out = os.path.join(folder_out, run_name)
 os.makedirs(folder_out, exist_ok=True)
 
 import sys
-sys.stdout = open(os.path.join(folder_out, "console.txt"), 'w')
+#sys.stdout = open(os.path.join(folder_out, "console.txt"), 'w')
 
 datasetpath = "../CalImgs/ChArUco - Sorted/Samsung Galaxy S10 Plus/WideAngle/Fold_1/*.jpg"
 
@@ -100,4 +103,4 @@ fcc.Metrics.voronoi.plot_voronoi(imp, angels)
 plt.savefig(os.path.join(folder_out, "CM_Voronoi.png"))
 plt.close()
 
-sys.stdout.close()
+#sys.stdout.close()

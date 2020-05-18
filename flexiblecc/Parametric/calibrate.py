@@ -134,6 +134,39 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
 
 
 def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, verbose=0, draw=None):
+    """
+    This function is used to find the charuco markeres and corneres'
+    find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, verbose=0, draw=None) -> markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all
+    :param gray_imgs: Array there contains the images with chessboards. The images has to be in grayscale colorspace and in a "int" datatype
+    :type gray_imgs: iterable
+    :param dictionary: dictionary of markers indicating the type of markers. Can normally be found with cv2.aruco.getPredefinedDictionary
+    :type dictionary: opencv aruco_Dictionary
+    :param board: The used charuco board
+    :type board: aruco_CharucoBoard
+    :param win_size: Half of the side length of the search window
+    :type win_size: tuple
+    :param zero_zone: Half of the size of the dead region in the middle of the search zone over which the summation in the formula below is not done. It is used sometimes to avoid possible singularities of the autocorrelation matrix. The value of (-1,-1) indicates that there is no such a size.
+    :type zero_zone: tuple
+    :param criteria: Criteria for termination of the iterative process of corner refinement. That is, the process of corner position refinement stops either after criteria.maxCount iterations or when the corner position moves by less than criteria.epsilon on some iteration. If None the criteria will be set to (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    :type criteria: tuple
+    :param verbose:  0, or 1. Verbosity mode. 0 = silent, 1 = progress bar and print out
+    :type verbose: int
+    :param draw: The file path to save draw charuco images. If None it will not save any
+    :type draw: str
+
+    :returns:
+    - markerCorners: Vector of vectors of the charuco corners found in the images
+    - marmarkerIds: Vector of vectors of the charuco corners id's found in the images
+    - charucoCorners: Vector of vectors of the charuco corners found in the images
+    - charucoIds: Vector of vectors of the charuco corners id's found in the images
+    - obj_points: Vector of vectors of the charuco corners as object points found in the images
+
+    :rtype markerCorners: ndarray
+    :rtype marmarkerIds: ndarrayv
+    :rtype charucoCorners: ndarray
+    :rtype charucoIds: ndarray
+    :rtype obj_points: ndarray
+    """
     if criteria is None:
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     else:
@@ -215,7 +248,7 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     :type zero_zone: tuple
     :param criteria: Criteria for termination of the iterative process of corner refinement. That is, the process of corner position refinement stops either after criteria.maxCount iterations or when the corner position moves by less than criteria.epsilon on some iteration. If None the criteria will be set to (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     :type criteria: tuple
-    :param flags: The flags used in cv2.calibrateCameraExtended. Default flags CALIB_RATIONAL_MODEL, CALIB_THIN_PRISM_MODEL and CALIB_TILTED_MODEL. Flages tehre can be used:
+    :param flags: The flags used in cv2.calibrateCameraExtended. Default flags CALIB_RATIONAL_MODEL, CALIB_THIN_PRISM_MODEL and CALIB_TILTED_MODEL. Flages there can be used:
             CALIB_USE_INTRINSIC_GUESS cameraMatrix contains valid initial values of fx, fy, cx, cy that are optimized further. Otherwise, (cx, cy) is initially set to the image center ( imageSize is used), and focal distances are computed in a least-squares fashion. Note, that if intrinsic parameters are known, there is no need to use this function just to estimate extrinsic parameters. Use solvePnP instead.
             CALIB_FIX_PRINCIPAL_POINT The principal point is not changed during the global optimization. It stays at the center or at a different location specified when CALIB_USE_INTRINSIC_GUESS is set too.
             CALIB_FIX_ASPECT_RATIO The functions considers only fy as a free parameter. The ratio fx/fy stays the same as in the input cameraMatrix . When CALIB_USE_INTRINSIC_GUESS is not set, the actual input values of fx and fy are ignored, only their ratio is computed and used further.
