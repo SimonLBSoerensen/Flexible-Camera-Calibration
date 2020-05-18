@@ -136,6 +136,45 @@ def _color_gray(me, min_=0, max_=8):
     gray = np.clip((me - min_)/(max_ - min_), 0, 1)*255
     return np.round(np.array([gray,gray,gray])).astype(int)
 
+
+def make_colorbar_gray(magnitude_treshold, ax=None):
+    """
+    Makes a plot with a color bar for the voronoi plots over magnitude with grayscale
+    :param magnitude_treshold: The magnitude_treshold used in the magnitude voronoi plots
+    :type magnitude_treshold: float
+    :argument ax: The axis to plot on
+    :type ax: matplotlib.axes
+
+    :return ax: The axis for the plot
+    :rtype ax: matplotlib.axes
+    """
+    if ax is None:
+        plt.figure()
+        ax = plt.gca()
+
+    bar = np.full((100, 10, 3), [255, 255, 255])
+    errors = np.linspace(0, magnitude_treshold, 75)
+    colors = [_color_gray(el, max_=magnitude_treshold) for el in errors]
+    for i in range(75):
+        bar[i, :] = colors[i]
+
+    plt.imshow(bar)
+    ax.invert_yaxis()
+    plt.ylim(0, 100)
+    plt.xticks([])
+
+    locs = list(np.linspace(0, 75, 4, dtype=int)) + [100]
+    labels = []
+    for loc in locs:
+        if loc < len(errors):
+            labels.append(f"{errors[loc]:0.2f}")
+    labels.append(f"{magnitude_treshold:0.2f}")
+    labels.append(f"+{magnitude_treshold:0.2f}")
+
+    plt.yticks(locs, labels)
+
+    return ax
+
 def cal_angles_and_mag(image_points, project_points):
     """
     Calgulates the angels and magnitude for the projectet points in relation to the feature points
