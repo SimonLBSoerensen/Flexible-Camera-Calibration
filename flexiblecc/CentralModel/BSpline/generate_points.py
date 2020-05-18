@@ -16,7 +16,7 @@ file_path = r'D:\WindowsFolders\Documents\GitHub\Flexible-Camera-Calibration\fle
 image_dimensions = (200, 200)
 grid_dimensions = (200, 200)
 
-order = 2
+order = 1
 shape = (6,6,3)
 
 knot_method = 'open_uniform' # 'uniform' or 'open_uniform'
@@ -25,7 +25,7 @@ end_divergence = 1e-10
 min_basis_value = 0
 
 ## PLOTTING ##
-export_option = 'rotation' # 'rotation', 'single' or 'none'. 
+export_option = 'single' # 'rotation', 'single' or 'none'. 
 image_name = '{}_{}_{}'.format(order, cm_generation, knot_method)
 
 draw_as_surface = True
@@ -34,7 +34,7 @@ draw_pts = True
 draw_ctrl = True
 draw_tv = True
 
-orbit = True
+orbit = False
 
 frame_time = 1000/60 # in ms
 

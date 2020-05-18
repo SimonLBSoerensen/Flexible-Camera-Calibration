@@ -220,8 +220,8 @@ class CentralModel:
 
         between = lambda a, x, b: max(min(x,b),a)
 
-        px = between(np.floor(self.order / 2), px, self.a.shape[0] - 1 - np.floor(self.order / 2))
-        py = between(np.floor(self.order / 2), py, self.a.shape[1] - 1 - np.floor(self.order / 2))
+        px = between(self.order // 2, px, self.a.shape[0] - 1 - self.order // 2)
+        py = between(self.order // 2, py, self.a.shape[1] - 1 - self.order // 2)
 
         if is_even(self.order):
             x = np.arange(np.ceil(-0.5*(self.order + 1)), np.ceil(0.5*self.order) + 1) + np.round(px)
