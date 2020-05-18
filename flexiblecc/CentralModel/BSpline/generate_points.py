@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from tqdm import tqdm
 
-from central_model import CentralModel, fit_central_model
 from central_model import CentralModel, fit_central_model, cm_load
 
 import pyqtgraph as pg
