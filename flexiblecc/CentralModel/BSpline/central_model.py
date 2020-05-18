@@ -121,7 +121,7 @@ class CentralModel:
 
         return t
 
-    def sample(self, u, v):
+    def sample(self, u, v, normalize=True):
         """Used to sample the b-spline surface. \n
 
         Keyword arguments: \n
@@ -145,6 +145,9 @@ class CentralModel:
             for j in vj:
                 aij = self.a[i, j]
                 res += np.multiply(aij, Bh[i] * Bv[j])
+
+        if normalize:
+            res /= np.linalg.norm(res)
 
         return res
 
