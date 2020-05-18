@@ -146,7 +146,7 @@ class CentralModel:
                 aij = self.a[i, j]
                 res += np.multiply(aij, Bh[i] * Bv[j])
 
-        if normalize:
+        if normalize and np.linalg.norm(res) > 0:
             res /= np.linalg.norm(res)
 
         return res
@@ -429,14 +429,14 @@ if __name__ == '__main__':
         with open('temp_file.npz', 'rb') as file:
             cm = cm_load(file)
 
-        ray = np.array([[4], [2], [8]])
+        ray = np.array([[4.0], [2.0], [8.0]])
 
         options = {'disp': True,'xtol': 1e-8, 'ftol': 1e-8}
         u, v = cm.forward_sample(ray, method='Powell', tol=1e-8, options=options)
 
-        s = cm.sample(u, v)
+        s = cm.sample(u, v, normalize=True).reshape((3,1))
 
-        print(ray, s, ray-s)
+        print('Original ray:\n{}\n\nSampled ray:\n{}\n\nDiff:\n{}\n'.format(ray, s, ray-s))
 
     ## Real world forward sampling test
     if False:
