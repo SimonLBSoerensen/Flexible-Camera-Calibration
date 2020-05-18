@@ -23,7 +23,6 @@ setuptools.setup(
     license='MIT',
     install_requires=["numpy", "opencv-contrib-python>=3.1", "tqdm",
                       "matplotlib", "scipy", "Pillow", "seaborn", "pandas"
-
                       ],
 )
 
