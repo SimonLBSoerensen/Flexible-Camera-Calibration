@@ -16,7 +16,7 @@ file_path = r'D:\WindowsFolders\Documents\GitHub\Flexible-Camera-Calibration\fle
 image_dimensions = (200, 200)
 grid_dimensions = (200, 200)
 
-order = 1
+order = 2
 shape = (6,6,3)
 
 knot_method = 'open_uniform' # 'uniform' or 'open_uniform'
@@ -32,7 +32,7 @@ draw_as_surface = True
 
 draw_pts = True
 draw_ctrl = True
-draw_tv = True
+draw_tv = False
 
 orbit = False
 
