@@ -54,7 +54,7 @@ squareLength = 0.01  # [m]
 markerLength = 0.0075  # [m]
 dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_1000)
 
-calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board = parcc.calibrate_camera_charuco(
+calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board, not_used = parcc.calibrate_camera_charuco(
     gayscale_images, squaresX, squaresY,
     squareLength, markerLength, dictionary, verbose=1)
 

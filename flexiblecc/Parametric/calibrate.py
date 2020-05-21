@@ -57,6 +57,7 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
     - perViewErrors: Vector of the RMS re-projection error estimated for each pattern view
     - objPoint: Vector of vectors of calibration pattern points in the calibration pattern coordinate space
     - imgPoints: Vector of vectors of the projections of calibration pattern points
+    - not_used: Vector with the indexs of the images where no markers was found
 
     :rtype retval: float
     :rtype cameraMatrix: ndarray
@@ -68,6 +69,7 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
     :rtype perViewErrors: ndarray
     :rtype objPoints: ndarray
     :rtype imgPoints: ndarray
+    :rtype not_used: ndarray
     """
 
     assert isinstance(gray_imgs, Iterable), "gray_imgs has to be a iterable there consists of the grayscale images"
@@ -90,6 +92,7 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
     # Arrays to hold the object points and corner point for all the chessboards
     obj_points = []
     img_points = []
+    not_used = []
 
     if verbose == 1:
         iter = tqdm(gray_imgs, unit="image")
@@ -119,7 +122,8 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
 
             # Add the better corners
             img_points.append(new_better_corners)
-
+        else:
+            not_used.append(i)
     if verbose == 1:
         print("Doing camera calibrate")
 
@@ -130,13 +134,14 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
         flags=flags)
 
     return retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, \
-           perViewErrors, np.array(obj_points), np.array(img_points)
+           perViewErrors, np.array(obj_points), np.array(img_points), np.array(not_used)
 
 
-def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, verbose=0, draw=None):
+def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, detectorParameters=None, verbose=0, draw=None):
     """
-    This function is used to find the charuco markeres and corneres'
+    This function is used to find the charuco markeres and corneres in the function calibrate_camera_charuco. Can be used outside calibrate_camera_charuco for debug
     find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, verbose=0, draw=None) -> markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all
+
     :param gray_imgs: Array there contains the images with chessboards. The images has to be in grayscale colorspace and in a "int" datatype
     :type gray_imgs: iterable
     :param dictionary: dictionary of markers indicating the type of markers. Can normally be found with cv2.aruco.getPredefinedDictionary
@@ -149,6 +154,8 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
     :type zero_zone: tuple
     :param criteria: Criteria for termination of the iterative process of corner refinement. That is, the process of corner position refinement stops either after criteria.maxCount iterations or when the corner position moves by less than criteria.epsilon on some iteration. If None the criteria will be set to (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     :type criteria: tuple
+    :param detectorParameters: DetectorParameters used in cv2.aruco.detectMarkers. If None default parameters will be used. Can be one detectorParameters used on all images or a list with them there shoud be used on the diffrent images
+    :type detectorParameters: cv2.aruco_DetectorParameters or list of cv2.aruco_DetectorParameter
     :param verbose:  0, or 1. Verbosity mode. 0 = silent, 1 = progress bar and print out
     :type verbose: int
     :param draw: The file path to save draw charuco images. If None it will not save any
@@ -160,19 +167,26 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
     - charucoCorners: Vector of vectors of the charuco corners found in the images
     - charucoIds: Vector of vectors of the charuco corners id's found in the images
     - obj_points: Vector of vectors of the charuco corners as object points found in the images
+    - not_used: Vector with the indexs of the images where no markers was found
 
     :rtype markerCorners: ndarray
     :rtype marmarkerIds: ndarrayv
     :rtype charucoCorners: ndarray
     :rtype charucoIds: ndarray
     :rtype obj_points: ndarray
+    :rtype not_used: ndarray
     """
     if criteria is None:
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     else:
         assert isinstance(criteria, tuple), "criteria has to be a tuple"
 
-    cv2.aruco.DetectorParameters_create()
+    if detectorParameters is None:
+        detectorParameters = cv2.aruco.DetectorParameters_create()
+
+    if not isinstance(detectorParameters, list):
+        detectorParameters = [detectorParameters for _ in range(len(gray_imgs))]
+
 
     charucoCorners_all = []
     charucoIds_all = []
@@ -181,19 +195,21 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
     markerIds_all = []
     obj_points_all = []
 
+    not_used = []
+
     itr = enumerate(gray_imgs)
     if verbose == 1:
         print("Finding charuco features")
         itr = tqdm(itr, total=len(gray_imgs), unit="image")
 
     for i, img_gray in itr:
-        markerCorners, markerIds, rejectedImgPoints = cv2.aruco.detectMarkers(img_gray, dictionary)
+        markerCorners, markerIds, rejectedImgPoints = cv2.aruco.detectMarkers(img_gray, dictionary, parameters=detectorParameters[i])
 
         markers_found = len(markerCorners) > 0
 
         if markers_found:
 
-            markerCorners, markerIds, rejectedCorners, recoveredIdxs = cv2.aruco.refineDetectedMarkers(img_gray, board, markerCorners, markerIds, rejectedImgPoints)
+            #markerCorners, markerIds, rejectedCorners, recoveredIdxs = cv2.aruco.refineDetectedMarkers(img_gray, board, markerCorners, markerIds, rejectedImgPoints)
 
             markerCorners_all.append(markerCorners)
             markerIds_all.append(markerIds)
@@ -218,12 +234,16 @@ def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1,
                     cv2.aruco.drawDetectedMarkers(img_gray_draw, markerCorners, markerIds)
                     cv2.aruco.drawDetectedCornersCharuco(img_gray_draw, new_better_charucoCorners, charucoIds)
                     cv2.imwrite(os.path.join(draw, "{}.png".format(i)), img_gray_draw)
+            else:
+                not_used.append(i)
+        else:
+            not_used.append(i)
 
-    return markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all
+    return markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all, not_used
 
 
 def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, markerLength, dictionary, win_size=(10, 10),
-                     zero_zone=(-1, -1), criteria=None,
+                     zero_zone=(-1, -1), criteria=None, detectorParameters=None,
                      flags=(cv2.CALIB_RATIONAL_MODEL +
                             cv2.CALIB_THIN_PRISM_MODEL +
                             cv2.CALIB_TILTED_MODEL), verbose=0, draw=None):
@@ -248,6 +268,8 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     :type zero_zone: tuple
     :param criteria: Criteria for termination of the iterative process of corner refinement. That is, the process of corner position refinement stops either after criteria.maxCount iterations or when the corner position moves by less than criteria.epsilon on some iteration. If None the criteria will be set to (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     :type criteria: tuple
+    :param detectorParameters: DetectorParameters used in cv2.aruco.detectMarkers. If None default parameters will be used. Can be one detectorParameters used on all images or a list with them there shoud be used on the diffrent images
+    :type detectorParameters: cv2.aruco_DetectorParameters or list of cv2.aruco_DetectorParameter
     :param flags: The flags used in cv2.calibrateCameraExtended. Default flags CALIB_RATIONAL_MODEL, CALIB_THIN_PRISM_MODEL and CALIB_TILTED_MODEL. Flages there can be used:
             CALIB_USE_INTRINSIC_GUESS cameraMatrix contains valid initial values of fx, fy, cx, cy that are optimized further. Otherwise, (cx, cy) is initially set to the image center ( imageSize is used), and focal distances are computed in a least-squares fashion. Note, that if intrinsic parameters are known, there is no need to use this function just to estimate extrinsic parameters. Use solvePnP instead.
             CALIB_FIX_PRINCIPAL_POINT The principal point is not changed during the global optimization. It stays at the center or at a different location specified when CALIB_USE_INTRINSIC_GUESS is set too.
@@ -284,6 +306,7 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     - marmarkerIds: Vector of vectors of the charuco corners id's found in the images
     - obj_points: Vector of vectors of the charuco corners as object points found in the images
     - board: The used charuco board
+    - not_used: Vector with the indexs of the images where no markers was found
 
     :rtype retval: float
     :rtype cameraMatrix: ndarray
@@ -299,23 +322,20 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     :rtype marmarkerIds: ndarrayv
     :rtype obj_points: ndarray
     :rtype board: aruco_CharucoBoard
+    :rtype not_used: ndarray
     """
-    if criteria is None:
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    else:
-        assert isinstance(criteria, tuple), "criteria has to be a tuple"
-
     if draw is not None:
         os.makedirs(draw, exist_ok=True)
 
     board = cv2.aruco.CharucoBoard_create(squaresX, squaresY, squareLength, markerLength, dictionary)
 
-    markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all = find_Charuco(gray_imgs,
+    markerCorners_all, markerIds_all, charucoCorners_all, charucoIds_all, obj_points_all, not_used = find_Charuco(gray_imgs,
                                                                                                         dictionary,
                                                                                                         board,
                                                                                                         win_size,
                                                                                                         zero_zone,
                                                                                                         criteria,
+                                                                                                        detectorParameters,
                                                                                                         verbose,draw)
 
     if verbose == 1:
@@ -326,12 +346,19 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
     calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors = cv2.aruco.calibrateCameraCharucoExtended(charucoCorners_all, charucoIds_all, board, img_shape, cameraMatrix=None, distCoeffs=None, flags=flags)
 
     if draw is not None:
-        for i, (charucoCorners, charucoIds, rvec, tvec) in enumerate(
-                zip(charucoCorners_all, charucoIds_all, rvecs, tvecs)):
+        for i, (charucoCorners, charucoIds, rvec, tvec, error) in enumerate(
+                zip(charucoCorners_all, charucoIds_all, rvecs, tvecs, perViewErrors)):
             img_f = os.path.join(draw, "{}.png".format(i))
-            img = cv2.imread(img_f)
-            cv2.aruco.drawAxis(img, cameraMatrix, distCoeffs, rvec, tvec, 0.1)
-            cv2.imwrite(img_f, img)
+            if os.path.exists(img_f):
+                img = cv2.imread(img_f)
+                try:
+                    cv2.aruco.drawAxis(img, cameraMatrix, distCoeffs, rvec, tvec, 0.1)
+                except:
+                    pass
+                f_out = os.path.join(draw, "{}_{:0.4f}.png".format(i, error[0]))
+
+                cv2.imwrite(f_out, img)
+                os.remove(img_f)
 
     charucoCorners_all, charucoIds_all = np.array(charucoCorners_all), np.array(charucoIds_all)
     markerCorners_all, armarkerIds_all = np.array(markerCorners_all), np.array(markerIds_all)
@@ -341,4 +368,4 @@ def calibrate_camera_charuco(gray_imgs, squaresX, squaresY, squareLength, marker
         print("Calibration done")
 
     return calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, \
-           perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board
+           perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board, not_used
