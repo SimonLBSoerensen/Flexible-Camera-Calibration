@@ -103,7 +103,7 @@ class BundleAdjustment:
         self.sampled_spline_rays = deepcopy(self.obj_points)
 
         if len(self.sampled_spline_rays[0].shape) == 3:
-            for i, img in enumerate(self.obj_points):
+            for i, img in enumerate(self.sampled_spline_rays):
                 self.sampled_spline_rays[i] = img.reshape((img.shape[0],) + (3,))  
 
         #Reshape board for later use in np.dot()

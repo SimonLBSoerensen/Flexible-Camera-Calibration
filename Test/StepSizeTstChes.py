@@ -39,10 +39,23 @@ shutil.copy2(os.path.realpath(__file__), os.path.join(folder_out, "run_script.tx
 
 img_files = glob.glob(os.path.join(train_folder, "cam_0_*.png"))
 imgs = [cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2GRAY) for f in img_files]
-retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points, img_points, not_used = parcc.calibrate_camera_chessboard(imgs, (12, 12))
+#retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points_temp, img_points_temp, not_used = parcc.calibrate_camera_chessboard(imgs, (12, 12))
+
+#np.save('parametriccal', [retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points_temp, img_points_temp, not_used])
+
+retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points_temp, img_points_temp, not_used = np.load('parametriccal_DTU.npy', allow_pickle=True)
 
 image_shape = imgs[0].shape[:2]
 
+obj_points_temp = obj_points_temp.reshape((obj_points_temp.shape[0], obj_points_temp.shape[2], obj_points_temp.shape[3]))
+obj_points = np.ndarray(obj_points_temp.shape[0], dtype='object')
+img_points = np.ndarray(img_points_temp.shape[0], dtype='object')
+for i in range(len(obj_points)):
+    obj_points[i] = obj_points_temp[i]
+for i in range(len(img_points)):
+    img_points[i] = img_points_temp[i]
+
+print('doing BundleAdjustment')
 ba = BundleAdjustment(obj_points, rvecs, tvecs, img_points, cameraMatrix, distCoeffs, image_shape,
                       cm_stepsize=paras["cm_stepsize"], cm_order=paras["cm_order"], ls_ftol=paras["ls_ftol"], ls_gtol=paras["ls_gtol"])
 
