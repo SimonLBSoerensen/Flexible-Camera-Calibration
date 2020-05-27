@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, save_f_string=None):
+def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, save_f_string=None, fontsize=15):
     """
     Plots the distorsion discrept width distCoeffs
     Arguments:
@@ -39,7 +39,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
 
     plt.subplot(1, 2, 1)
     ax = plt.gca()
-    plt.title("Euclidean distance in pixels between distorted and undistorted")
+    plt.title("Euclidean distance in pixels between distorted and undistorted", fontsize=fontsize)
     im = plt.imshow(errors.reshape([len(g) for g in gridrange]))
     plt.xticks([], [])
     plt.yticks([], [])
@@ -49,7 +49,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
     plt.colorbar(im, cax=cax)
 
     plt.subplot(1, 2, 2)
-    plt.title("Euclidean distance in pixels between distorted and undistorted contour")
+    plt.title("Euclidean distance in pixels between distorted and undistorted contour", fontsize=fontsize)
     CS = plt.contour(Y, X, errors_grid, levels=contour_n_levels)
     plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
 
@@ -81,7 +81,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
     # Plot the angle between distorted and undistorted
     plt.subplot(1, 2, 1)
     ax = plt.gca()
-    plt.title("Angle between distorted and undistorted [deg]")
+    plt.title("Angle between distorted and undistorted [deg]", fontsize=fontsize)
     im = plt.imshow(angels.reshape([len(g) for g in gridrange]), cmap="hsv")
     plt.xticks([], [])
     plt.yticks([], [])
@@ -91,7 +91,7 @@ def plot_distort(undistort_func, image_size, step=10, contour_n_levels=None, sav
     plt.colorbar(im, cax=cax)
 
     plt.subplot(1, 2, 2)
-    plt.title("Angle between distorted and undistorted contour [deg]")
+    plt.title("Angle between distorted and undistorted contour [deg]", fontsize=fontsize)
     CS = plt.contour(Y, X, angels_grid, levels=contour_n_levels)
     plt.clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
 

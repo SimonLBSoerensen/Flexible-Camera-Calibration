@@ -53,7 +53,7 @@ detectorParameters.minOtsuStdDev = 12
 calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, \
         armarkerIds_all, obj_points_all, board, not_used = parcc.calibrate_camera_charuco(imgs, squaresX, squaresY, squareLength, markerLength, dictionary, detectorParameters=detectorParameters)
 
-np.save(os.path.join(folder_out, "cali.npy"), [calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, board, not_used])
+np.save(os.path.join(folder_out, "cali.npy"), [calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, armarkerIds_all, obj_points_all, not_used])
 
 image_shape = imgs[0].shape[:2]
 
