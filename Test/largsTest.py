@@ -15,8 +15,9 @@ import json
 import shutil
 from flexiblecc.CentralModel import BundleAdjustment
 import uuid
+from tqdm import tqdm
 
-train_folder = r"S:\Programming\Studet\FCC\CalImgs\ChArUco - Threshold\NikonD3100\AF-S NIKKOR 55-300mm\55mm\Fold_*"
+train_folder = r"S:\Programming\Studet\FCC\CalImgs\ChArUco - Threshold\Samsung Galaxy S10 Plus\Telephoto\*"
 
 paras = {
     "cm_stepsize": 200,
@@ -38,7 +39,7 @@ with open(os.path.join(folder_out, "para.json"), "w", encoding='utf-8') as f:
 shutil.copy2(os.path.realpath(__file__), os.path.join(folder_out, "run_script.txt"))
 
 
-imgs = [cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2GRAY) for f in glob.glob(os.path.join(train_folder, "*.jpg"))]
+imgs = [cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2GRAY) for f in tqdm(glob.glob(os.path.join(train_folder, "*.jpg")))]
 
 squaresX = 28 # [#]
 squaresY = 19 # [#]
