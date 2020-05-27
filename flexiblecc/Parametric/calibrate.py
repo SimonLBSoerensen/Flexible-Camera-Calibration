@@ -133,8 +133,18 @@ def calibrate_camera_chessboard(gray_imgs, pattern_size, win_size=(10, 10), zero
         obj_points, img_points, (gray_imgs[0].shape[1], gray_imgs[0].shape[0]), cameraMatrix=None, distCoeffs=None,
         flags=flags)
 
+    obj_points, img_points, not_used = np.array(obj_points), np.array(img_points), np.array(not_used)
+
+    obj_points = obj_points.reshape((obj_points.shape[0], obj_points.shape[2], obj_points.shape[3]))
+    obj_points_temp = np.ndarray(obj_points.shape[0], dtype='object')
+    img_points_temp = np.ndarray(img_points.shape[0], dtype='object')
+    for i in range(len(obj_points)):
+        obj_points_temp[i] = obj_points[i]
+    for i in range(len(img_points)):
+        img_points_temp[i] = img_points[i]
+
     return retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, \
-           perViewErrors, np.array(obj_points), np.array(img_points), np.array(not_used)
+           perViewErrors, obj_points_temp, img_points_temp, not_used
 
 
 def find_Charuco(gray_imgs, dictionary, board, win_size=(10, 10), zero_zone=(-1, -1), criteria=None, detectorParameters=None, verbose=0, draw=None):

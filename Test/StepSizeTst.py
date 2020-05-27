@@ -19,7 +19,7 @@ import uuid
 train_folder = r"S:\Programming\Studet\FCC\CalImgs\ChArUco - Threshold\NikonD3100\AF-S NIKKOR 55-300mm\55mm\Fold_0"
 
 paras = {
-    "cm_stepsize": 252,
+    "cm_stepsize": 200,
     "cm_order": 2,
     "ls_ftol": 1e-8,
     "ls_gtol": 1e-8,
