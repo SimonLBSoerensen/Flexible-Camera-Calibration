@@ -89,10 +89,11 @@ def plot_qqplot(arr, ax=None):
             r ** 2))
     ax.set_xlabel("Quantiles for $d_j^2$")
     ax.set_ylabel("Quantiles for ${\chi}_" + str(arr.shape[1]) + "^2$ distribution")
+    ax.grid()
     return ax
 
 
-def plot_box(arr, ax=None, violinplot=False):
+def plot_box(arr, ax=None, violinplot=False, labels=None):
     """
     Makes a Box plot
     :param arr: The input data in the shape of (n, p) (n the number of samples, p the number of dimensions)
@@ -102,14 +103,14 @@ def plot_box(arr, ax=None, violinplot=False):
         plt.figure()
         ax = plt.gca()
     if not violinplot:
-        ax.boxplot(arr)
+        ax.boxplot(arr, labels=labels)
         ax.set_title("Boxplots")
         ax.set_xlabel("Boxplot for the i'th dimensional variable")
     else:
         ax.violinplot(arr, showmedians=True)
         ax.set_title("Violinplot")
         ax.set_xlabel("Violinplot for the i'th dimensional variable")
-
+    ax.grid()
     return ax
 
 
@@ -214,12 +215,14 @@ def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_str
     else:
         plot_seaborn_scatter_matrix(arr, names=names)
         if save_f_string:
-            plt.savefig(save_f_string.format("save_f_string"), **saveargs)
+            plt.savefig(save_f_string.format("scatter_matrix"), **saveargs)
         plt.show()
 
         plt.figure()
         ax = plt.gca()
-        plot_box(arr, ax, violinplot=violinplot)
+        plot_box(arr, ax, violinplot=violinplot, labels=names)
+        plt.grid()
+        plt.tight_layout()
         if save_f_string:
             plt.savefig(save_f_string.format("box"), **saveargs)
         plt.show()
@@ -227,6 +230,8 @@ def plot_model_check(arr, in_one=False, names=None, violinplot=False, save_f_str
         plt.figure()
         ax = plt.gca()
         plot_qqplot(arr, ax)
+        plt.grid()
+        plt.tight_layout()
         if save_f_string:
             plt.savefig(save_f_string.format("qqplot"), **saveargs)
         plt.show()

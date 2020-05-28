@@ -210,6 +210,32 @@ def cal_angles_and_mag(image_points, project_points):
     img_points_all = np.concatenate(img_points_all).reshape(-1, 2)
     return img_points_all, diff_all, angels_all, mag_all
 
+def projectPoints(image_points, obj_points, rvecs, tvecs, cameraMatrix, distCoeffs):
+    """
+    Calgulates the projectet points in relation to the feature points using rvecs, tvecs, cameraMatrix, distCoeffs
+    :param image_points: The points object points are found in the image
+    :param obj_points: The object points
+    :param rvecs (ndarray): Rotation vectors estimated for each pattern view
+    :param tvecs (ndarray): Translation vectors estimated for each pattern view
+    :param cameraMatrix: 3x3 floating-point camera matrix
+            [[fx, 0,  cx],
+             [0,  fy, cy],
+    :param distCoeffs: vector of distortion coefficients of 4, 5, 8, 12 or 14 elements
+            (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]])
+    :return img_points_all: The image points
+    :return project_points: The reproject points
+    """
+    img_points_all = []
+    project_points = []
+
+    for img_ps, obj_ps, rvec, tvec in zip(image_points, obj_points, rvecs, tvecs):
+        real_img_points = img_ps.reshape(-1, 2)
+
+        repor_img_points = cv2.projectPoints(obj_ps, rvec, tvec, cameraMatrix, distCoeffs)[0].reshape(-1, 2)
+
+        project_points.append(repor_img_points)
+        img_points_all.append(real_img_points)
+    return img_points_all, project_points
 
 def projectPoints_and_cal_angles_and_mag(image_points, obj_points, rvecs, tvecs, cameraMatrix, distCoeffs):
     """
@@ -228,16 +254,8 @@ def projectPoints_and_cal_angles_and_mag(image_points, obj_points, rvecs, tvecs,
     :return angels: The angels for each of the points
     :return mag: The L2 magnitute for each of the points
     """
-    img_points_all = []
-    project_points = []
 
-    for img_ps, obj_ps, rvec, tvec in zip(image_points, obj_points, rvecs, tvecs):
-        real_img_points = img_ps.reshape(-1, 2)
-
-        repor_img_points = cv2.projectPoints(obj_ps, rvec, tvec, cameraMatrix, distCoeffs)[0].reshape(-1, 2)
-
-        project_points.append(repor_img_points)
-        img_points_all.append(real_img_points)
+    img_points_all, project_points = projectPoints(image_points, obj_points, rvecs, tvecs, cameraMatrix, distCoeffs)
 
     _, diff_all, angels_all, mag_all = cal_angles_and_mag(img_points_all, project_points)
     img_points_all = np.concatenate(img_points_all).reshape(-1, 2)
