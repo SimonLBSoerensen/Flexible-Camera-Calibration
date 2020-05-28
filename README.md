@@ -1,8 +1,6 @@
 # Flexible-Camera-Calibration
 Flexible Camera Calibration
 
-This project is a work in progress.
-
 Demo there show use of this module:
 - [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SimonLBSoerensen/Flexible-Camera-Calibration/blob/master/Demos/FlexibleCameraCalibration.ipynb)
 
