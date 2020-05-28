@@ -16,7 +16,7 @@ import shutil
 from flexiblecc.CentralModel import BundleAdjustment
 import uuid
 
-train_folder = r"DTU"
+train_folder = r"S:\Programming\Studet\FCC\CalImgs\Checkerboard\DTU"
 
 paras = {
     "cm_stepsize": 252,

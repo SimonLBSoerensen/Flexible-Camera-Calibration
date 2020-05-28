@@ -2,6 +2,9 @@
 # coding: utf-8
 import timeit
 
+rep = 10
+
+s = timeit.default_timer()
 time = timeit.timeit(r"""
 calibrate_retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, charucoCorners_all, charucoIds_all, markerCorners_all, \
     armarkerIds_all, obj_points_all, board, not_used = parcc.calibrate_camera_charuco(imgs, squaresX, squaresY,
@@ -41,8 +44,9 @@ dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_1000)
 
 detectorParameters = cv2.aruco.DetectorParameters_create()
 detectorParameters.minOtsuStdDev = 12
-""", number=10)
+""", number=rep)
+d = timeit.default_timer()
 
-print(time)
-
+print(time/rep)
+print(d-s)
 
