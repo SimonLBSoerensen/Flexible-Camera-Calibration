@@ -1,0 +1,33 @@
+{
+    "parameters": {
+        "image_dimensions": [
+            4608,
+            3072
+        ],
+        "cm_dimensions": [
+            4608,
+            3072
+        ],
+        "cm_stepsize": 300,
+        "cm_border": 0,
+        "cm_shape": [
+            17,
+            12,
+            3
+        ],
+        "cm_order": 2,
+        "cm_fit_control_points": true,
+        "cm_knot_method": "open_uniform",
+        "cm_min_basis_value": 0.0001,
+        "cm_end_divergence": 1e-10,
+        "cm_threads": 1,
+        "ls_sparsity": true,
+        "ls_verbose": 2,
+        "ls_ftol": 1e-08,
+        "ls_gtol": 1e-08,
+        "ls_method": "trf",
+        "os_info": "DESKTOP-7JTH9OA",
+        "duration_init": 85.40201663970947,
+        "duration_fitting": 30451.16155409813
+    }
+}

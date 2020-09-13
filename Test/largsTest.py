@@ -17,10 +17,10 @@ from flexiblecc.CentralModel import BundleAdjustment
 import uuid
 from tqdm import tqdm
 
-train_folder = r"S:\Programming\Studet\FCC\CalImgs\ChArUco - Threshold\Samsung Galaxy S10 Plus\Telephoto\*"
+train_folder = r"D:\WindowsFolders\Documents\300mm\*"
 
 paras = {
-    "cm_stepsize": 200,
+    "cm_stepsize": 300,
     "cm_order": 2,
     "ls_ftol": 1e-8,
     "ls_gtol": 1e-8,

@@ -10,7 +10,7 @@ import pyqtgraph.opengl as gl
 from OpenGL.GL import glReadBuffer, GL_FRONT
 
 ## GENERATION ##
-cm_generation = 'fit' # 'none', 'fit', 'load'
+cm_generation = 'none' # 'none', 'fit', 'load'
 file_path = r'D:\WindowsFolders\Documents\GitHub\Flexible-Camera-Calibration\flexiblecc\CentralModel\BSpline\cm.npz'
 
 image_dimensions = (200, 200)
@@ -146,9 +146,9 @@ if draw_tv:
 
 # Orients camera in 3d.
 w.showFullScreen()
-centerpoint = np.average(x, axis=0)
+centerpoint = np.median(x, axis=0)
 w.pan(centerpoint[0], centerpoint[1], centerpoint[2])
-w.setCameraPosition(distance=300)
+w.setCameraPosition(distance=400)
 
 
 # Orbiting and image exporting.

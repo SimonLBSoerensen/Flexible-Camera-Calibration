@@ -1,0 +1,6 @@
+{
+    "cm_stepsize": 300,
+    "cm_order": 2,
+    "ls_ftol": 1e-08,
+    "ls_gtol": 1e-08
+}

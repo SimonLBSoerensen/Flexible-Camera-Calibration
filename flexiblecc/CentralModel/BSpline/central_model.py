@@ -4,7 +4,7 @@ from tqdm import tqdm
 import multiprocessing
 import pickle
 
-from . import knot_generators as kg
+import knot_generators as kg
 
 # The implementation of this B-spline-based camera model is based on the description in the
 # article "Generalized B-spline Camera Model" by Johannes Beck and Christoph Stiller.
@@ -232,6 +232,31 @@ class CentralModel:
             y = np.arange(np.ceil(-0.5*self.order), np.ceil(0.5*self.order) + 1) + np.floor(py)
 
         return np.transpose(np.meshgrid(x, y))
+
+    def active_control_points_2(self, u, v):
+        """Returns the indeces of the control points that are used to calculate the point with the given pixel coordinates. \n
+
+        Keyword arguments: \n
+        u: Horizontal pixel coordinate. \n
+        v: Vertical pixel coordinate. 
+        """
+        assert not (isinstance(u, (np.ndarray, list)) or isinstance(v, (np.ndarray, list))) and all(np.isreal([u, v])), 'u and v must be numbers.'
+
+        w = self.a.shape[0]
+        h = self.a.shape[1]
+
+        u = self._normalize(u, self.grid_width, self.image_width)
+        v = self._normalize(v, self.grid_height, self.image_height)
+
+        pairs = []
+
+        for x in range(w):
+            for y in range(h):
+                val = self._B(x, self.order, self.th, u) * self._B(y, self.order, self.tv, v)
+                if val > 0:
+                    pairs.append([x, y])
+
+        return np.array(pairs)
 
     def forward_sample(self, ray, x0=None, use_bounds=True, method='Powell', tol=None, options={}, return_results=False, normalize=True):
         """Returns the corresponding pixel coordinates for a given ray. \n
